@@ -1,0 +1,21 @@
+{
+  "name": "pyrgo-soccer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:client": "pnpm --filter @pyrgo/client dev",
+    "dev:server": "pnpm --filter @pyrgo/server dev",
+    "dev": "pnpm run dev:client & pnpm run dev:server",
+    "build:shared": "pnpm --filter @pyrgo/shared build",
+    "build:client": "pnpm --filter @pyrgo/client build",
+    "build:server": "pnpm --filter @pyrgo/server build",
+    "build": "pnpm build:shared && pnpm build:client && pnpm build:server",
+    "start": "pnpm --filter @pyrgo/server start"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp"]
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
