@@ -2,7 +2,8 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm i -g pnpm@10 && pnpm install --frozen-lockfile && pnpm --filter @pyrgo/shared build && pnpm --filter @pyrgo/server build"
+    "nixpacksVersion": "1.30.0",
+    "buildCommand": "npm i -g pnpm@10 --force && pnpm install --frozen-lockfile && pnpm --filter @pyrgo/shared build && pnpm --filter @pyrgo/server build"
   },
   "deploy": {
     "startCommand": "node packages/server/dist/server/src/index.js",

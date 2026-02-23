@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@10.30.1",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev:client": "pnpm --filter @pyrgo/client dev",
     "dev:server": "pnpm --filter @pyrgo/server dev",
