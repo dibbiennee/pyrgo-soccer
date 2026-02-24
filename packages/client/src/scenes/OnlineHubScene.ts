@@ -146,10 +146,10 @@ export class OnlineHubScene extends Phaser.Scene {
     // Divider line
     const divider = this.add.graphics();
     divider.lineStyle(1, 0x444466, 0.5);
-    divider.lineBetween(L.cx, L.y(0.27), L.cx, L.y(0.78));
+    divider.lineBetween(L.cx, L.y(0.27), L.cx, L.y(0.72));
 
     // Back button
-    createButton(this, L.x(0.08), L.y(0.94), '\u2190 BACK', () => {
+    createButton(this, L.x(0.08), L.y(0.78), '\u2190 BACK', () => {
       this.cleanup();
       transitionTo(this, 'CharSelect', { mode: 'online' });
     }, { width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666 });

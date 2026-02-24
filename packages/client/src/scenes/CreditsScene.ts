@@ -39,7 +39,7 @@ export class CreditsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const btn = L.button('small');
-    createButton(this, L.cx, L.y(0.92), '\u2190 BACK', () => {
+    createButton(this, L.cx, L.y(0.78), '\u2190 BACK', () => {
       transitionTo(this, 'MainMenu');
     }, { width: btn.width, height: btn.height });
   }

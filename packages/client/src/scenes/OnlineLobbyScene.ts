@@ -135,7 +135,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
 
     // --- READY button ---
     const btnLarge = L.button('large');
-    this.readyBtn = createButton(this, L.cx, L.y(0.90), 'PRONTO', () => {
+    this.readyBtn = createButton(this, L.cx, L.y(0.72), 'PRONTO', () => {
       if (this.imReady) return;
       this.imReady = true;
       sm.menuClick();
@@ -146,7 +146,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
 
     // Leave button
     const btnSmall = L.button('small');
-    createButton(this, L.x(0.08), L.y(0.95), '\u2190 LEAVE', () => {
+    createButton(this, L.x(0.08), L.y(0.78), '\u2190 LEAVE', () => {
       this.socket.emit('ROOM_LEAVE', {});
       this.cleanup();
       transitionTo(this, 'OnlineHub', { charRef: this.charRef });

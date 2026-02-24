@@ -209,7 +209,7 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // ── Buttons ───────────────────────────────────────
-    const btnY = L.y(0.80);
+    const btnY = L.y(0.72);
     const btnSize = L.button('normal');
 
     if (this.gameMode === 'online') {
@@ -260,7 +260,7 @@ export class ResultScene extends Phaser.Scene {
     socket.on('REMATCH_REQUESTED', (_data: { playerIndex: number }) => {
       SoundManager.getInstance().notificationPing();
       const L = this.L;
-      const toast = this.add.text(L.cx, L.y(0.74), 'L\'avversario vuole la rivincita!', {
+      const toast = this.add.text(L.cx, L.y(0.66), 'L\'avversario vuole la rivincita!', {
         fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
       }).setOrigin(0.5).setDepth(10);
       this.tweens.add({

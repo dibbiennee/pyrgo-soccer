@@ -52,7 +52,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.detailContainer = this.add.container(0, 0);
 
     // Page navigation
-    const pageY = L.y(0.88);
+    const pageY = L.y(0.70);
     this.pageText = this.add.text(L.cx, pageY, '', {
       fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5);
@@ -80,7 +80,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
 
     // Back button
     const btnSmall = L.button('small');
-    createButton(this, L.x(0.08), L.y(0.95), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+    createButton(this, L.x(0.08), L.y(0.78), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
       width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666,
     });
 

@@ -153,7 +153,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ── Version/Credits ─────────────────────────────
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
-    this.add.text(L.cx, L.y(0.97), `v${version}  |  PYRGO GAMES`, {
+    this.add.text(L.cx, L.y(0.78), `v${version}  |  PYRGO GAMES`, {
       fontSize: L.fontSize('small'),
       fontFamily: 'Arial',
       color: '#444466',

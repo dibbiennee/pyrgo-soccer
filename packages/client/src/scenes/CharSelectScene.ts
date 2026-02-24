@@ -53,14 +53,14 @@ export class CharSelectScene extends Phaser.Scene {
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
     // Title
-    this.add.text(L.cx, L.y(0.04), 'SELECT YOUR FIGHTER', {
-      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.02), 'SELECT YOUR FIGHTER', {
+      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Selection indicator
-    this.selectionIndicator = this.add.text(L.cx, L.y(0.08), 'Player 1 \u2014 Choose!', {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
+    this.selectionIndicator = this.add.text(L.cx, L.y(0.055), 'Player 1 \u2014 Choose!', {
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 
     // ── Tabs ─────────────────────────────────────
@@ -70,50 +70,48 @@ export class CharSelectScene extends Phaser.Scene {
     this.gridContainer = this.add.container(0, 0);
     this.showGrid();
 
-    // ── Preview area ─────────────────────────────
-    this.previewContainer = this.add.container(L.cx, L.y(0.68));
+    // ── Preview area (compact) ──────────────────
+    this.previewContainer = this.add.container(L.cx, L.y(0.40));
 
     this.nameText = this.add.text(0, 0, '', {
-      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
     this.previewContainer.add(this.nameText);
 
-    const statsOffsetX = -L.w * 0.2;
-    const statLineH = L.fontSizeN('small') * 1.5;
+    const statsX = -180;
+    const statY0 = 22;
+    const statGap = 22;
     this.statsTexts = {
-      speed: this.add.text(statsOffsetX, L.h * 0.04, '', { fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff' }),
-      power: this.add.text(statsOffsetX, L.h * 0.04 + statLineH, '', { fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff' }),
-      defense: this.add.text(statsOffsetX, L.h * 0.04 + statLineH * 2, '', { fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff' }),
+      speed: this.add.text(statsX, statY0, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
+      power: this.add.text(statsX, statY0 + statGap, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
+      defense: this.add.text(statsX, statY0 + statGap * 2, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
     };
     this.previewContainer.add(this.statsTexts.speed);
     this.previewContainer.add(this.statsTexts.power);
     this.previewContainer.add(this.statsTexts.defense);
 
-    this.superText = this.add.text(0, L.h * 0.14, '', {
-      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: L.w * 0.5 },
+    this.superText = this.add.text(0, statY0 + statGap * 3, '', {
+      fontSize: '12px', fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: 500 },
     }).setOrigin(0.5);
     this.previewContainer.add(this.superText);
 
     this.updatePreview();
 
-    // ── Bottom buttons ───────────────────────────
-    const btnNormal = L.button('normal');
-    const btnSmall = L.button('small');
-
-    createButton(this, L.cx, L.y(0.94), 'CONFIRM', () => this.confirmSelection(), {
-      width: btnNormal.width, height: btnNormal.height, fillColor: 0x00aa44, strokeColor: 0x00ff66,
-      fontSize: L.fontSize('body'),
+    // ── Bottom buttons (compact) ──────────────────
+    createButton(this, L.cx, L.y(0.58), 'CONFIRM', () => this.confirmSelection(), {
+      width: 180, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66,
+      fontSize: '16px',
     });
 
-    createButton(this, L.x(0.08), L.y(0.94), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
-      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('tiny'), strokeColor: 0x666666,
+    createButton(this, L.x(0.12), L.y(0.58), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+      width: 120, height: 36, fontSize: '13px', strokeColor: 0x666666,
     });
 
-    createButton(this, L.x(0.92), L.y(0.94), '+ CREATE', () => {
+    createButton(this, L.x(0.88), L.y(0.58), '+ CREATE', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'CharSelect' });
     }, {
-      width: btnSmall.width * 1.1, height: btnSmall.height, fontSize: L.fontSize('tiny'), fillColor: 0x225588, strokeColor: 0x44aaff,
+      width: 140, height: 36, fontSize: '13px', fillColor: 0x225588, strokeColor: 0x44aaff,
     });
   }
 
@@ -129,10 +127,10 @@ export class CharSelectScene extends Phaser.Scene {
     ];
 
     const tabW = L.w * 0.12;
-    const tabH = L.unit(0.06);
+    const tabH = 28;
     const gap = L.pad(0.5);
     const startX = L.cx - (tabs.length * (tabW + gap)) / 2 + tabW / 2;
-    const y = L.y(0.13);
+    const y = L.y(0.09);
 
     tabs.forEach((tab, i) => {
       const x = startX + i * (tabW + gap);
@@ -192,12 +190,12 @@ export class CharSelectScene extends Phaser.Scene {
   private buildPresetGrid(): void {
     const L = this.L;
     const count = CHARACTERS.length;
-    const cardS = L.cardSize();
-    const gap = L.cardGap();
+    const cardS = 90;
+    const gap = 15;
     const spacing = cardS + gap;
     const totalW = (count - 1) * spacing;
     const startX = L.cx - totalW / 2;
-    const y = L.y(0.32);
+    const y = L.y(0.22);
 
     CHARACTERS.forEach((char, i) => {
       const x = startX + i * spacing;
@@ -208,10 +206,10 @@ export class CharSelectScene extends Phaser.Scene {
   private buildMyCharsGrid(): void {
     const L = this.L;
     const customs = CharacterStorage.getAll();
-    const cardS = L.cardSize();
-    const gap = L.cardGap();
+    const cardS = 90;
+    const gap = 15;
     const spacing = cardS + gap;
-    const y = L.y(0.32);
+    const y = L.y(0.22);
 
     if (customs.length === 0) {
       const emptyText = this.add.text(L.cx, y, 'No custom characters yet.\nTap "+ CREATE" to make one!', {
@@ -233,10 +231,10 @@ export class CharSelectScene extends Phaser.Scene {
 
   private buildCommunityGrid(): void {
     const L = this.L;
-    const cardS = L.cardSize();
-    const gap = L.cardGap();
+    const cardS = 90;
+    const gap = 15;
     const spacing = cardS + gap;
-    const y = L.y(0.32);
+    const y = L.y(0.22);
 
     if (this.communityChars.length === 0) {
       const loadingText = this.add.text(L.cx, y, 'Loading community...', {
@@ -273,7 +271,7 @@ export class CharSelectScene extends Phaser.Scene {
 
   private createCharCard(x: number, y: number, name: string, charDef: CharacterDef, ref: CharacterRef): void {
     const L = this.L;
-    const cardS = L.cardSize();
+    const cardS = 90;
     const container = this.add.container(x, y);
     this.gridContainer.add(container);
 

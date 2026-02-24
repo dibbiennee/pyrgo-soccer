@@ -566,11 +566,11 @@ export class CharacterCreatorScene extends Phaser.Scene {
     const btnSmall = L.button('small');
     const btnNormal = L.button('normal');
 
-    createButton(this, L.x(0.08), L.y(0.96), '\u2190 BACK', () => transitionTo(this, this.returnTo), {
+    createButton(this, L.x(0.08), L.y(0.78), '\u2190 BACK', () => transitionTo(this, this.returnTo), {
       width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('tiny'), strokeColor: 0x666666,
     });
 
-    createButton(this, L.x(0.92), L.y(0.96), 'SAVE', () => this.saveCharacter(), {
+    createButton(this, L.x(0.92), L.y(0.78), 'SAVE', () => this.saveCharacter(), {
       width: btnNormal.width, height: btnNormal.height, fillColor: 0x00aa44, strokeColor: 0x00ff66, fontSize: L.fontSize('body'),
     });
   }
