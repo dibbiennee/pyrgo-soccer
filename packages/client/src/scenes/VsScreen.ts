@@ -8,6 +8,7 @@ import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { LayoutManager } from '../utils/LayoutManager';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 export class VsScreen extends Phaser.Scene {
   private charRef1: CharacterRef = { type: 'preset', id: 1 };
@@ -43,11 +44,11 @@ export class VsScreen extends Phaser.Scene {
     const appearance2: Appearance = char2.appearance ?? defaultAppearanceForPreset(char2.id);
 
     // ── Dramatic background ─────────────────────────
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0a0a1a);
+    drawGradientBackground(this);
 
     // Diagonal split line
     const splitGfx = this.add.graphics();
-    splitGfx.fillStyle(0x00ccff, 0.15);
+    splitGfx.fillStyle(THEME.primary, 0.15);
     splitGfx.fillTriangle(0, 0, L.cx + L.unit(0.06), 0, 0, L.h);
     splitGfx.fillStyle(0xff4444, 0.15);
     splitGfx.fillTriangle(L.w, 0, L.cx - L.unit(0.06), L.h, L.w, L.h);
@@ -61,7 +62,7 @@ export class VsScreen extends Phaser.Scene {
     p1Container.setAlpha(0);
 
     const p1Name = this.add.text(-L.unit(0.3), nameOffsetY, char1.name, {
-      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5).setAlpha(0);
 
@@ -86,11 +87,11 @@ export class VsScreen extends Phaser.Scene {
 
     const superTextY = L.cy + L.unit(0.22);
     const superText1 = this.add.text(L.x(0.25), superTextY, super1?.displayName ?? '', {
-      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#aaaacc',
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setAlpha(0);
 
     const superText2 = this.add.text(L.x(0.75), superTextY, super2?.displayName ?? '', {
-      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#aaaacc',
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setAlpha(0);
 
     // ── Countdown text ──────────────────────────────

@@ -95,7 +95,7 @@ if ('serviceWorker' in navigator) {
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  backgroundColor: '#1a1a2e',
+  backgroundColor: '#0f0f23',
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

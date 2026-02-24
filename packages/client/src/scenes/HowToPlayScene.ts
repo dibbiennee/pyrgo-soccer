@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { LayoutManager } from '../utils/LayoutManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 export class HowToPlayScene extends Phaser.Scene {
   constructor() {
@@ -12,10 +13,10 @@ export class HowToPlayScene extends Phaser.Scene {
     fadeIn(this);
     const L = new LayoutManager(this);
 
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
+    drawGradientBackground(this);
 
     this.add.text(L.cx, L.y(0.06), 'HOW TO PLAY', {
-      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
@@ -42,14 +43,14 @@ export class HowToPlayScene extends Phaser.Scene {
     const boxGap = L.unit(0.012);
     const boxY = L.y(0.31);
     const gfx = this.add.graphics();
-    gfx.lineStyle(1, 0x00ccff, 0.4);
+    gfx.lineStyle(1, THEME.primary, 0.4);
     gfx.strokeRect(leftX - boxW - boxGap / 2, boxY, boxW, boxH);
     gfx.strokeRect(leftX + boxGap / 2, boxY, boxW, boxH);
     this.add.text(leftX - boxW / 2 - boxGap / 2, boxY + boxH / 2, 'MOVE', {
-      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#00ccff',
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: THEME.primaryHex,
     }).setOrigin(0.5);
     this.add.text(leftX + boxW / 2 + boxGap / 2, boxY + boxH / 2, 'JUMP', {
-      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#00ccff',
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: THEME.primaryHex,
     }).setOrigin(0.5);
 
     // Keyboard controls
@@ -67,11 +68,11 @@ export class HowToPlayScene extends Phaser.Scene {
     const meterH = L.unit(0.018);
     const meterY = L.y(0.33);
     const meterGfx = this.add.graphics();
-    meterGfx.fillStyle(0x333355, 1);
+    meterGfx.fillStyle(THEME.cardBorder, 1);
     meterGfx.fillRect(rightX - meterW / 2, meterY, meterW, meterH);
     meterGfx.fillStyle(0xff5500, 1);
     meterGfx.fillRect(rightX - meterW / 2, meterY, meterW * 0.75, meterH);
-    meterGfx.lineStyle(1, 0x666688, 1);
+    meterGfx.lineStyle(1, THEME.cardBorder, 1);
     meterGfx.strokeRect(rightX - meterW / 2, meterY, meterW, meterH);
     this.add.text(rightX, meterY + meterH + L.pad(), 'SUPER!', {
       fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ff5500',
@@ -89,6 +90,6 @@ export class HowToPlayScene extends Phaser.Scene {
     const btn = L.button('small');
     createButton(this, L.cx, L.y(0.78), '\u2190 BACK', () => {
       transitionTo(this, 'MainMenu');
-    }, { width: btn.width, height: btn.height });
+    }, { width: btn.width, height: btn.height, style: 'ghost' });
   }
 }

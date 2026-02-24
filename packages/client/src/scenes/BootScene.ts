@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { LayoutManager } from '../utils/LayoutManager';
 import { SoundManager } from '../audio/SoundManager';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -11,16 +12,17 @@ export class BootScene extends Phaser.Scene {
     const L = new LayoutManager(this);
 
     // Background
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
+    drawGradientBackground(this);
 
     // Logo "PYRGO SOCCER" above the loading bar
     const logo = this.add.text(L.cx, L.cy - L.unit(0.15), 'PYRGO SOCCER', {
       fontSize: L.fontSize('title'),
       fontFamily: 'Arial Black, Arial',
-      color: '#00ccff',
+      color: THEME.primaryHex,
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5);
+    logo.setShadow(0, 0, '#00d4ff80', 20);
 
     // Pulsing logo glow
     this.tweens.add({
@@ -37,7 +39,7 @@ export class BootScene extends Phaser.Scene {
     const barHeight = L.unit(0.04);
 
     const progressBox = this.add.graphics();
-    progressBox.fillStyle(0x222244, 0.8);
+    progressBox.fillStyle(THEME.cardBg, 0.8);
     progressBox.fillRoundedRect(L.cx - barWidth / 2, L.cy - barHeight / 2, barWidth, barHeight, 4);
 
     const progressBar = this.add.graphics();
@@ -45,7 +47,7 @@ export class BootScene extends Phaser.Scene {
     const loadingText = this.add.text(L.cx, L.cy + L.unit(0.06), 'Loading...', {
       fontSize: L.fontSize('small'),
       fontFamily: 'Arial',
-      color: '#888899',
+      color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     const innerPad = barWidth * 0.0125;
@@ -54,7 +56,7 @@ export class BootScene extends Phaser.Scene {
 
     this.load.on('progress', (value: number) => {
       progressBar.clear();
-      progressBar.fillStyle(0x00ccff, 1);
+      progressBar.fillStyle(THEME.primary, 1);
       progressBar.fillRoundedRect(
         L.cx - barWidth / 2 + innerPad,
         L.cy - barHeight / 2 + innerPad,

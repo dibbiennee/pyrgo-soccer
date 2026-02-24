@@ -37,6 +37,7 @@ import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { setupGameCamera } from '../utils/responsive';
+import { THEME } from '../ui/UITheme';
 
 export class LocalGameScene extends Phaser.Scene {
   // Game objects
@@ -64,10 +65,10 @@ export class LocalGameScene extends Phaser.Scene {
   // UI
   private scoreText!: Phaser.GameObjects.Text;
   private timerText!: Phaser.GameObjects.Text;
-  private superMeter1!: Phaser.GameObjects.Rectangle;
-  private superMeter1Bg!: Phaser.GameObjects.Rectangle;
-  private superMeter2!: Phaser.GameObjects.Rectangle;
-  private superMeter2Bg!: Phaser.GameObjects.Rectangle;
+  private superMeter1!: Phaser.GameObjects.Graphics;
+  private superMeter1Bg!: Phaser.GameObjects.Graphics;
+  private superMeter2!: Phaser.GameObjects.Graphics;
+  private superMeter2Bg!: Phaser.GameObjects.Graphics;
   private countdownText!: Phaser.GameObjects.Text;
   private overtimeText?: Phaser.GameObjects.Text;
   private superGlow1?: Phaser.Tweens.Tween;
@@ -519,6 +520,11 @@ export class LocalGameScene extends Phaser.Scene {
     const hudTop = 35;
     const meterY = hudTop + 34;
 
+    // HUD panel background
+    const hudPanel = this.add.graphics();
+    hudPanel.fillStyle(THEME.hudBg, 0.65);
+    hudPanel.fillRoundedRect(GAME_WIDTH / 2 - 130, hudTop - 6, 260, 52, 10);
+
     // Score
     this.scoreText = this.add.text(GAME_WIDTH / 2, hudTop, '0 - 0', {
       fontSize: '32px',
@@ -537,19 +543,22 @@ export class LocalGameScene extends Phaser.Scene {
       strokeThickness: 3,
     }).setOrigin(0.5, 0);
 
-    // Super meter backgrounds
+    // Super meter backgrounds (rounded rects)
     const meterWidth = 100;
     const meterHeight = 8;
+    const meterRadius = 3;
 
-    this.superMeter1Bg = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, meterWidth, meterHeight, 0x333333, 0.7);
-    this.superMeter1Bg.setOrigin(1, 0.5);
-    this.superMeter1 = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, 0, meterHeight, 0xffaa00);
-    this.superMeter1.setOrigin(1, 0.5);
+    this.superMeter1Bg = this.add.graphics();
+    this.superMeter1Bg.fillStyle(THEME.statBarEmpty, 0.7);
+    this.superMeter1Bg.fillRoundedRect(GAME_WIDTH / 2 - 100 - meterWidth, meterY - meterHeight / 2, meterWidth, meterHeight, meterRadius);
 
-    this.superMeter2Bg = this.add.rectangle(GAME_WIDTH / 2 + 100, meterY, meterWidth, meterHeight, 0x333333, 0.7);
-    this.superMeter2Bg.setOrigin(0, 0.5);
-    this.superMeter2 = this.add.rectangle(GAME_WIDTH / 2 + 100, meterY, 0, meterHeight, 0xffaa00);
-    this.superMeter2.setOrigin(0, 0.5);
+    this.superMeter1 = this.add.graphics();
+
+    this.superMeter2Bg = this.add.graphics();
+    this.superMeter2Bg.fillStyle(THEME.statBarEmpty, 0.7);
+    this.superMeter2Bg.fillRoundedRect(GAME_WIDTH / 2 + 100, meterY - meterHeight / 2, meterWidth, meterHeight, meterRadius);
+
+    this.superMeter2 = this.add.graphics();
 
     // Player names
     this.add.text(GAME_WIDTH / 2 - 100, hudTop, this.player1.characterDef.name, {
@@ -979,19 +988,38 @@ export class LocalGameScene extends Phaser.Scene {
       this.timerText.setScale(1);
     }
 
-    // Super meters
+    // Super meters (rounded rect redraw)
     const meterWidth = 100;
+    const meterHeight = 8;
+    const meterRadius = 3;
+    const hudTop = 35;
+    const meterY = hudTop + 34;
     const p1Fill = (this.player1.superMeter / SUPER_MAX) * meterWidth;
     const p2Fill = (this.player2.superMeter / SUPER_MAX) * meterWidth;
-    this.superMeter1.setSize(p1Fill, 8);
-    this.superMeter2.setSize(p2Fill, 8);
-
-    // Glow when full — pulsing alpha
     const p1Full = this.player1.superMeter >= SUPER_MAX;
     const p2Full = this.player2.superMeter >= SUPER_MAX;
-    this.superMeter1.setFillStyle(p1Full ? 0x00ff00 : 0xffaa00);
-    this.superMeter2.setFillStyle(p2Full ? 0x00ff00 : 0xffaa00);
 
+    this.superMeter1.clear();
+    if (p1Fill > 0) {
+      if (p1Full) {
+        this.superMeter1.fillGradientStyle(0x00ff00, 0x00ff00, 0x00cc00, 0x00cc00);
+      } else {
+        this.superMeter1.fillGradientStyle(THEME.statBarFillStart, THEME.statBarFillStart, THEME.statBarFillEnd, THEME.statBarFillEnd);
+      }
+      this.superMeter1.fillRoundedRect(GAME_WIDTH / 2 - 100 - p1Fill, meterY - meterHeight / 2, p1Fill, meterHeight, meterRadius);
+    }
+
+    this.superMeter2.clear();
+    if (p2Fill > 0) {
+      if (p2Full) {
+        this.superMeter2.fillGradientStyle(0x00ff00, 0x00ff00, 0x00cc00, 0x00cc00);
+      } else {
+        this.superMeter2.fillGradientStyle(THEME.statBarFillStart, THEME.statBarFillStart, THEME.statBarFillEnd, THEME.statBarFillEnd);
+      }
+      this.superMeter2.fillRoundedRect(GAME_WIDTH / 2 + 100, meterY - meterHeight / 2, p2Fill, meterHeight, meterRadius);
+    }
+
+    // Glow when full — pulsing alpha
     if (p1Full && !this.superGlow1) {
       this.superGlow1 = this.tweens.add({
         targets: this.superMeter1,

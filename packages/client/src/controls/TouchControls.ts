@@ -1,13 +1,15 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 import type { InputState } from '@pyrgo/shared';
+import { THEME } from '../ui/UITheme';
 
 interface TouchButton {
-  bg: Phaser.GameObjects.Rectangle;
+  gfx: Phaser.GameObjects.Graphics;
   label: Phaser.GameObjects.Text;
   pressed: boolean;
   baseColor: number;
   pressedColor: number;
+  rect: { x: number; y: number; w: number; h: number };
 }
 
 export interface TouchControlsConfig {
@@ -30,6 +32,8 @@ const MIN_BTN = 56;
 
 /** Clamp a dimension to at least MIN_BTN */
 const clamp = (v: number) => Math.max(v, MIN_BTN);
+
+const BTN_RADIUS = 10;
 
 export class TouchControls {
   private scene: Phaser.Scene;
@@ -59,64 +63,86 @@ export class TouchControls {
   }
 
   private createDualControls(): void {
-    // Dual mode: both players share the screen — tighter layout
-    const dpad  = clamp(60);   // d-pad buttons
-    const kick  = clamp(70);   // kick button
-    const jump  = clamp(96);   // jump width
-    const jumpH = clamp(50);   // jump height
-    const sup   = clamp(56);   // super button
+    const dpad  = clamp(60);
+    const kick  = clamp(70);
+    const jump  = clamp(96);
+    const jumpH = clamp(50);
+    const sup   = clamp(56);
     const supH  = 44;
 
     // === P1 side (left) ===
-    this.createButton('p1_left',  px(0.06),  py(0.875), dpad, dpad, '◄', 0x444466, 0x6666aa);
-    this.createButton('p1_right', px(0.15),  py(0.875), dpad, dpad, '►', 0x444466, 0x6666aa);
-    this.createButton('p1_jump',  px(0.106), py(0.73),  jump, jumpH, 'JUMP', 0x2255aa, 0x4488dd);
-    this.createButton('p1_kick',  px(0.275), py(0.855), kick, kick, 'KICK', 0xaa2222, 0xdd4444);
-    this.createButton('p1_super', px(0.275), py(0.70),  sup,  supH, 'S', 0xaa8800, 0xddbb00);
+    this.createButton('p1_left',  px(0.06),  py(0.875), dpad, dpad, '◄', THEME.touchDpad, THEME.touchDpadPressed);
+    this.createButton('p1_right', px(0.15),  py(0.875), dpad, dpad, '►', THEME.touchDpad, THEME.touchDpadPressed);
+    this.createButton('p1_jump',  px(0.106), py(0.73),  jump, jumpH, 'JUMP', THEME.touchJump, THEME.touchJumpPressed);
+    this.createButton('p1_kick',  px(0.275), py(0.855), kick, kick, 'KICK', THEME.touchKick, THEME.touchKickPressed);
+    this.createButton('p1_super', px(0.275), py(0.70),  sup,  supH, 'S', THEME.touchSuper, THEME.touchSuperPressed);
 
     // === P2 side (right — mirrored) ===
-    this.createButton('p2_left',  px(0.85),  py(0.875), dpad, dpad, '◄', 0x444466, 0x6666aa);
-    this.createButton('p2_right', px(0.94),  py(0.875), dpad, dpad, '►', 0x444466, 0x6666aa);
-    this.createButton('p2_jump',  px(0.894), py(0.73),  jump, jumpH, 'JUMP', 0x2255aa, 0x4488dd);
-    this.createButton('p2_kick',  px(0.725), py(0.855), kick, kick, 'KICK', 0xaa2222, 0xdd4444);
-    this.createButton('p2_super', px(0.725), py(0.70),  sup,  supH, 'S', 0xaa8800, 0xddbb00);
+    this.createButton('p2_left',  px(0.85),  py(0.875), dpad, dpad, '◄', THEME.touchDpad, THEME.touchDpadPressed);
+    this.createButton('p2_right', px(0.94),  py(0.875), dpad, dpad, '►', THEME.touchDpad, THEME.touchDpadPressed);
+    this.createButton('p2_jump',  px(0.894), py(0.73),  jump, jumpH, 'JUMP', THEME.touchJump, THEME.touchJumpPressed);
+    this.createButton('p2_kick',  px(0.725), py(0.855), kick, kick, 'KICK', THEME.touchKick, THEME.touchKickPressed);
+    this.createButton('p2_super', px(0.725), py(0.70),  sup,  supH, 'S', THEME.touchSuper, THEME.touchSuperPressed);
   }
 
   private createSingleControls(): void {
-    // Single mode (online): more space, larger buttons
-    const dpad  = clamp(70);   // d-pad buttons
-    const kick  = clamp(90);   // kick button
-    const jump  = clamp(110);  // jump width
-    const jumpH = clamp(56);   // jump height
-    const sup   = clamp(70);   // super button
+    const dpad  = clamp(70);
+    const kick  = clamp(90);
+    const jump  = clamp(110);
+    const jumpH = clamp(56);
+    const sup   = clamp(70);
     const supH  = 48;
 
     // Left side: D-pad
-    this.createButton('p1_left',  px(0.065), py(0.875), dpad, dpad, '◄', 0x444466, 0x6666aa);
-    this.createButton('p1_right', px(0.165), py(0.875), dpad, dpad, '►', 0x444466, 0x6666aa);
-    this.createButton('p1_jump',  px(0.115), py(0.71),  jump, jumpH, 'JUMP', 0x2255aa, 0x4488dd);
+    this.createButton('p1_left',  px(0.065), py(0.875), dpad, dpad, '◄', THEME.touchDpad, THEME.touchDpadPressed);
+    this.createButton('p1_right', px(0.165), py(0.875), dpad, dpad, '►', THEME.touchDpad, THEME.touchDpadPressed);
+    this.createButton('p1_jump',  px(0.115), py(0.71),  jump, jumpH, 'JUMP', THEME.touchJump, THEME.touchJumpPressed);
 
     // Right side: actions
-    this.createButton('p1_kick',  px(0.90),  py(0.855), kick, kick, 'KICK', 0xaa2222, 0xdd4444);
-    this.createButton('p1_super', px(0.90),  py(0.67),  sup,  supH, 'SUPER', 0xaa8800, 0xddbb00);
+    this.createButton('p1_kick',  px(0.90),  py(0.855), kick, kick, 'KICK', THEME.touchKick, THEME.touchKickPressed);
+    this.createButton('p1_super', px(0.90),  py(0.67),  sup,  supH, 'SUPER', THEME.touchSuper, THEME.touchSuperPressed);
   }
 
   private createButton(
     id: string, x: number, y: number, w: number, h: number,
     text: string, baseColor: number, pressedColor: number,
   ): void {
-    const bg = this.scene.add.rectangle(x, y, w, h, baseColor, 0.6);
-    bg.setStrokeStyle(2, 0xffffff, 0.3);
+    const gfx = this.scene.add.graphics();
+    this.drawNormal(gfx, x, y, w, h, baseColor);
+
     const fontSize = text.length <= 2 ? '22px' : '13px';
     const label = this.scene.add.text(x, y, text, {
       fontSize, fontFamily: 'Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5);
 
-    this.container.add(bg);
+    this.container.add(gfx);
     this.container.add(label);
 
-    this.buttons.set(id, { bg, label, pressed: false, baseColor, pressedColor });
+    this.buttons.set(id, {
+      gfx, label, pressed: false, baseColor, pressedColor,
+      rect: { x: x - w / 2, y: y - h / 2, w, h },
+    });
+  }
+
+  private drawNormal(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, color: number): void {
+    gfx.clear();
+    gfx.fillStyle(color, 0.55);
+    gfx.fillRoundedRect(x - w / 2, y - h / 2, w, h, BTN_RADIUS);
+    gfx.lineStyle(2, 0xffffff, 0.2);
+    gfx.strokeRoundedRect(x - w / 2, y - h / 2, w, h, BTN_RADIUS);
+  }
+
+  private drawPressed(gfx: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, color: number): void {
+    gfx.clear();
+    // Glow ring
+    gfx.fillStyle(color, 0.2);
+    gfx.fillRoundedRect(x - w / 2 - 3, y - h / 2 - 3, w + 6, h + 6, BTN_RADIUS + 2);
+    // Pressed fill
+    gfx.fillStyle(color, 0.75);
+    gfx.fillRoundedRect(x - w / 2, y - h / 2, w, h, BTN_RADIUS);
+    gfx.lineStyle(2, 0xffffff, 0.35);
+    gfx.strokeRoundedRect(x - w / 2, y - h / 2, w, h, BTN_RADIUS);
   }
 
   private setupPointerEvents(): void {
@@ -133,16 +159,21 @@ export class TouchControls {
 
   private processPointer(pointer: Phaser.Input.Pointer, isNewPress: boolean): void {
     for (const [id, btn] of this.buttons) {
-      const rect = btn.bg.getBounds();
-      if (rect.contains(pointer.worldX, pointer.worldY)) {
+      const r = btn.rect;
+      if (
+        pointer.worldX >= r.x && pointer.worldX <= r.x + r.w &&
+        pointer.worldY >= r.y && pointer.worldY <= r.y + r.h
+      ) {
         this.pressButton(id, btn, isNewPress);
       }
     }
   }
 
   private pressButton(id: string, btn: TouchButton, isNewPress: boolean): void {
-    // Visual feedback
-    btn.bg.setFillStyle(btn.pressedColor, 0.8);
+    if (!btn.pressed) {
+      const r = btn.rect;
+      this.drawPressed(btn.gfx, r.x + r.w / 2, r.y + r.h / 2, r.w, r.h, btn.pressedColor);
+    }
     btn.pressed = true;
 
     const target = id.startsWith('p2_') ? this.p2Input : this.p1Input;
@@ -163,9 +194,11 @@ export class TouchControls {
   }
 
   private releaseAll(_pointer: Phaser.Input.Pointer): void {
-    // Reset visual state and continuous inputs
-    for (const [id, btn] of this.buttons) {
-      btn.bg.setFillStyle(btn.baseColor, 0.6);
+    for (const [_id, btn] of this.buttons) {
+      if (btn.pressed) {
+        const r = btn.rect;
+        this.drawNormal(btn.gfx, r.x + r.w / 2, r.y + r.h / 2, r.w, r.h, btn.baseColor);
+      }
       btn.pressed = false;
     }
     this.p1Input.left = false;

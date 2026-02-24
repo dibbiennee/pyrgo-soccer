@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { LayoutManager } from '../utils/LayoutManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 declare const __APP_VERSION__: string;
 
@@ -14,10 +15,10 @@ export class CreditsScene extends Phaser.Scene {
     fadeIn(this);
     const L = new LayoutManager(this);
 
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
+    drawGradientBackground(this);
 
     this.add.text(L.cx, L.y(0.22), 'PYRGO SOCCER', {
-      fontSize: L.fontSize('title'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+      fontSize: L.fontSize('title'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
       stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5);
 
@@ -27,20 +28,20 @@ export class CreditsScene extends Phaser.Scene {
 
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
     this.add.text(L.cx, L.y(0.44), `Version ${version}`, {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     this.add.text(L.cx, L.y(0.54), 'Built with Phaser 3 + Socket.io', {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#666677',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     this.add.text(L.cx, L.y(0.60), 'All sounds are procedurally generated', {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#666677',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     const btn = L.button('small');
     createButton(this, L.cx, L.y(0.78), '\u2190 BACK', () => {
       transitionTo(this, 'MainMenu');
-    }, { width: btn.width, height: btn.height });
+    }, { width: btn.width, height: btn.height, style: 'ghost' });
   }
 }

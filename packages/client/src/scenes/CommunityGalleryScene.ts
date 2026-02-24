@@ -7,6 +7,7 @@ import { getDeviceId } from '../storage/DeviceId';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { LayoutManager } from '../utils/LayoutManager';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 const CARDS_PER_PAGE = 6;
 
@@ -32,17 +33,17 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.page = 0;
     this.selectedChar = null;
 
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
+    drawGradientBackground(this);
 
     // Title
     this.add.text(L.cx, L.y(0.06), 'COMMUNITY', {
-      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00e5ff',
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
 
     // Status text (loading / error)
     this.statusText = this.add.text(L.cx, L.cy, 'Loading...', {
-      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#888899',
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     // Grid container
@@ -54,26 +55,38 @@ export class CommunityGalleryScene extends Phaser.Scene {
     // Page navigation
     const pageY = L.y(0.70);
     this.pageText = this.add.text(L.cx, pageY, '', {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     const navBtnW = L.unit(0.06);
     const navBtnH = L.unit(0.04);
-    const prevBg = this.add.rectangle(L.cx - L.unit(0.10), pageY, navBtnW, navBtnH, 0x333355);
-    prevBg.setInteractive({ useHandCursor: true });
+    const navRadius = 8;
+
+    const prevGfx = this.add.graphics();
+    prevGfx.fillStyle(THEME.cardBg, 1);
+    prevGfx.fillRoundedRect(L.cx - L.unit(0.10) - navBtnW / 2, pageY - navBtnH / 2, navBtnW, navBtnH, navRadius);
+    prevGfx.lineStyle(1, THEME.cardBorder, 1);
+    prevGfx.strokeRoundedRect(L.cx - L.unit(0.10) - navBtnW / 2, pageY - navBtnH / 2, navBtnW, navBtnH, navRadius);
+    const prevHit = this.add.rectangle(L.cx - L.unit(0.10), pageY, navBtnW, navBtnH, 0x000000, 0);
+    prevHit.setInteractive({ useHandCursor: true });
     this.add.text(L.cx - L.unit(0.10), pageY, '<', {
       fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
-    prevBg.on('pointerdown', () => {
+    prevHit.on('pointerdown', () => {
       if (this.page > 0) { this.page--; this.showGrid(); }
     });
 
-    const nextBg = this.add.rectangle(L.cx + L.unit(0.10), pageY, navBtnW, navBtnH, 0x333355);
-    nextBg.setInteractive({ useHandCursor: true });
+    const nextGfx = this.add.graphics();
+    nextGfx.fillStyle(THEME.cardBg, 1);
+    nextGfx.fillRoundedRect(L.cx + L.unit(0.10) - navBtnW / 2, pageY - navBtnH / 2, navBtnW, navBtnH, navRadius);
+    nextGfx.lineStyle(1, THEME.cardBorder, 1);
+    nextGfx.strokeRoundedRect(L.cx + L.unit(0.10) - navBtnW / 2, pageY - navBtnH / 2, navBtnW, navBtnH, navRadius);
+    const nextHit = this.add.rectangle(L.cx + L.unit(0.10), pageY, navBtnW, navBtnH, 0x000000, 0);
+    nextHit.setInteractive({ useHandCursor: true });
     this.add.text(L.cx + L.unit(0.10), pageY, '>', {
       fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
-    nextBg.on('pointerdown', () => {
+    nextHit.on('pointerdown', () => {
       const maxPage = Math.max(0, Math.ceil(this.characters.length / CARDS_PER_PAGE) - 1);
       if (this.page < maxPage) { this.page++; this.showGrid(); }
     });
@@ -81,7 +94,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     // Back button
     const btnSmall = L.button('small');
     createButton(this, L.x(0.08), L.y(0.78), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
-      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666,
+      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), style: 'ghost',
     });
 
     // Fetch characters
@@ -104,11 +117,14 @@ export class CommunityGalleryScene extends Phaser.Scene {
       this.gridContainer.add(container);
 
       const cardH = cardSize * 0.92;
-      const bg = this.add.rectangle(0, 0, cardSize, cardH, 0x222244, 0.6);
-      bg.setStrokeStyle(1, 0x333355);
-      container.add(bg);
+      const gfx = this.add.graphics();
+      gfx.fillStyle(THEME.cardBg, 0.6);
+      gfx.fillRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, 12);
+      gfx.lineStyle(1, THEME.cardBorder, 1);
+      gfx.strokeRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, 12);
+      container.add(gfx);
 
-      const shimmer = this.add.rectangle(0, 0, cardSize, cardH, 0x333366, 0);
+      const shimmer = this.add.rectangle(0, 0, cardSize, cardH, 0x2a2a6a, 0);
       container.add(shimmer);
       this.tweens.add({
         targets: shimmer,
@@ -118,11 +134,11 @@ export class CommunityGalleryScene extends Phaser.Scene {
       });
 
       const headR = cardSize * 0.1;
-      const head = this.add.arc(0, -cardSize * 0.15, headR, 0, 360, false, 0x333355, 0.5);
+      const head = this.add.arc(0, -cardSize * 0.15, headR, 0, 360, false, THEME.cardBorder, 0.5);
       container.add(head);
-      const body = this.add.rectangle(0, cardSize * 0.05, headR * 2, cardSize * 0.25, 0x333355, 0.5);
+      const body = this.add.rectangle(0, cardSize * 0.05, headR * 2, cardSize * 0.25, THEME.cardBorder, 0.5);
       container.add(body);
-      const nameBar = this.add.rectangle(0, cardSize * 0.33, cardSize * 0.5, cardSize * 0.08, 0x333355, 0.5);
+      const nameBar = this.add.rectangle(0, cardSize * 0.33, cardSize * 0.5, cardSize * 0.08, THEME.cardBorder, 0.5);
       container.add(nameBar);
     }
   }
@@ -174,10 +190,19 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.gridContainer.add(container);
 
     const cardH = cardSize * 0.92;
-    const bg = this.add.rectangle(0, 0, cardSize, cardH, 0x2a2a4e);
-    bg.setStrokeStyle(2, 0x444466);
-    bg.setInteractive({ useHandCursor: true });
-    container.add(bg);
+    const radius = 12;
+
+    const gfx = this.add.graphics();
+    gfx.fillStyle(THEME.cardBg, 1);
+    gfx.fillRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, radius);
+    gfx.lineStyle(2, THEME.cardBorder, 1);
+    gfx.strokeRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, radius);
+    container.add(gfx);
+
+    // Invisible hit area
+    const hitArea = this.add.rectangle(0, 0, cardSize, cardH, 0x000000, 0);
+    hitArea.setInteractive({ useHandCursor: true });
+    container.add(hitArea);
 
     const appearance: Appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
     const previewScale = cardSize / 200;
@@ -189,9 +214,21 @@ export class CommunityGalleryScene extends Phaser.Scene {
     }).setOrigin(0.5);
     container.add(name);
 
-    bg.on('pointerdown', () => this.showDetail(char));
-    bg.on('pointerover', () => bg.setFillStyle(0x3a3a6e));
-    bg.on('pointerout', () => bg.setFillStyle(0x2a2a4e));
+    hitArea.on('pointerdown', () => this.showDetail(char));
+    hitArea.on('pointerover', () => {
+      gfx.clear();
+      gfx.fillStyle(0x2a2a6a, 1);
+      gfx.fillRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, radius);
+      gfx.lineStyle(2, THEME.cardBorder, 1);
+      gfx.strokeRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, radius);
+    });
+    hitArea.on('pointerout', () => {
+      gfx.clear();
+      gfx.fillStyle(THEME.cardBg, 1);
+      gfx.fillRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, radius);
+      gfx.lineStyle(2, THEME.cardBorder, 1);
+      gfx.strokeRoundedRect(-cardSize / 2, -cardH / 2, cardSize, cardH, radius);
+    });
   }
 
   private showDetail(char: PublishedCharacter): void {
@@ -216,7 +253,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     ];
     stats.forEach((s, i) => {
       const t = this.add.text(statsX, statsY + i * L.unit(0.03), s, {
-        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#aaaacc',
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
       });
       this.detailContainer.add(t);
     });
@@ -224,7 +261,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     const superInfo = SUPER_MOVES.find(m => m.id === char.superMove);
     if (superInfo) {
       const superText = this.add.text(L.cx, statsY + L.unit(0.11), `Super: ${superInfo.displayName} \u2014 ${superInfo.description}`, {
-        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
         wordWrap: { width: L.w * 0.5 },
       }).setOrigin(0.5);
       this.detailContainer.add(superText);
@@ -236,33 +273,17 @@ export class CommunityGalleryScene extends Phaser.Scene {
       const ownerBtnH = L.unit(0.04);
       const ownerBtnY = statsY + L.unit(0.16);
 
-      const toggleBg = this.add.rectangle(L.cx - L.unit(0.10), ownerBtnY, ownerBtnW, ownerBtnH, 0x442266);
-      toggleBg.setStrokeStyle(1, 0x8844cc);
-      toggleBg.setInteractive({ useHandCursor: true });
-      const toggleText = this.add.text(L.cx - L.unit(0.10), ownerBtnY, 'MAKE PRIVATE', {
-        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffffff',
-      }).setOrigin(0.5);
-      this.detailContainer.add(toggleBg);
-      this.detailContainer.add(toggleText);
-
-      toggleBg.on('pointerdown', async () => {
+      const toggleBtn = createButton(this, L.cx - L.unit(0.10), ownerBtnY, 'MAKE PRIVATE', async () => {
         await CharacterApi.toggleVisibility(char.serverId, false);
         this.fetchCharacters();
-      });
+      }, { width: ownerBtnW, height: ownerBtnH, fontSize: this.L.fontSize('tiny'), style: 'secondary' });
+      this.detailContainer.add(toggleBtn.container);
 
-      const delBg = this.add.rectangle(L.cx + L.unit(0.10), ownerBtnY, ownerBtnW * 0.75, ownerBtnH, 0x664444);
-      delBg.setStrokeStyle(1, 0x884444);
-      delBg.setInteractive({ useHandCursor: true });
-      const delText = this.add.text(L.cx + L.unit(0.10), ownerBtnY, 'DELETE', {
-        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ff4444',
-      }).setOrigin(0.5);
-      this.detailContainer.add(delBg);
-      this.detailContainer.add(delText);
-
-      delBg.on('pointerdown', async () => {
+      const delBtn = createButton(this, L.cx + L.unit(0.10), ownerBtnY, 'DELETE', async () => {
         await CharacterApi.remove(char.serverId);
         this.fetchCharacters();
-      });
+      }, { width: ownerBtnW * 0.75, height: ownerBtnH, fontSize: this.L.fontSize('tiny'), style: 'danger' });
+      this.detailContainer.add(delBtn.container);
     }
   }
 }

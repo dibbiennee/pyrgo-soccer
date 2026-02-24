@@ -3,6 +3,7 @@ import { LayoutManager } from '../utils/LayoutManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 declare const __APP_VERSION__: string;
 
@@ -21,7 +22,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.L = L;
 
     // ── Background ──────────────────────────────────
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
+    drawGradientBackground(this);
 
     // Stylised field gradient (bottom half)
     const fieldGfx = this.add.graphics();
@@ -36,12 +37,13 @@ export class MainMenuScene extends Phaser.Scene {
     markGfx.lineBetween(L.cx, L.y(0.65), L.cx, L.h);
     markGfx.strokeCircle(L.cx, L.y(0.82), L.unit(0.08));
 
-    // Floating particles (star-like)
+    // Floating particles (star-like) — mix cyan (70%) + orange (30%)
     for (let i = 0; i < 20; i++) {
       const px = Math.random() * L.w;
       const py = Math.random() * L.h * 0.55;
       const size = 1 + Math.random() * 2;
-      const p = this.add.arc(px, py, size, 0, 360, false, 0x00ccff, 0.15 + Math.random() * 0.3);
+      const color = Math.random() < 0.7 ? THEME.particleCyan : THEME.particleOrange;
+      const p = this.add.arc(px, py, size, 0, 360, false, color, 0.15 + Math.random() * 0.3);
       this.tweens.add({
         targets: p,
         y: py - 15 - Math.random() * 20,
@@ -59,10 +61,11 @@ export class MainMenuScene extends Phaser.Scene {
     const title = this.add.text(L.cx, L.y(0.14), 'PYRGO SOCCER', {
       fontSize: L.fontSize('title'),
       fontFamily: 'Arial Black, Arial',
-      color: '#00ccff',
+      color: THEME.primaryHex,
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5).setScale(0);
+    title.setShadow(0, 0, '#00d4ff80', 20);
 
     this.tweens.add({
       targets: title,
@@ -85,7 +88,7 @@ export class MainMenuScene extends Phaser.Scene {
     const subtitle = this.add.text(L.cx, L.y(0.21), 'Head Soccer Battle!', {
       fontSize: L.fontSize('subtitle'),
       fontFamily: 'Arial',
-      color: '#aaaacc',
+      color: THEME.textSecondary,
     }).setOrigin(0.5).setAlpha(0);
 
     this.tweens.add({
@@ -118,16 +121,16 @@ export class MainMenuScene extends Phaser.Scene {
       transitionTo(this, 'CharSelect', { mode: 'cpu' });
     }, {
       width: primaryW, height: primaryH,
-      fillColor: 0x0a3355, strokeColor: 0x00ccff, strokeThickness: 3,
       fontSize: '18px',
+      style: 'primary',
     });
 
     createButton(this, L.cx + primaryW / 2 + primaryGap / 2, primaryY, 'ONLINE MATCH', () => {
       transitionTo(this, 'CharSelect', { mode: 'online' });
     }, {
       width: primaryW, height: primaryH,
-      fillColor: 0x0a3355, strokeColor: 0x00ccff, strokeThickness: 3,
       fontSize: '18px',
+      style: 'primary',
     });
 
     // ── Secondary buttons ─────────────────────────
@@ -140,33 +143,33 @@ export class MainMenuScene extends Phaser.Scene {
       transitionTo(this, 'CharacterCreator', { returnTo: 'MainMenu' });
     }, {
       width: secW, height: secH,
-      fillColor: 0x2a2a4e, strokeColor: 0x555577, strokeThickness: 1,
       fontSize: '13px',
+      style: 'secondary',
     });
 
     createButton(this, L.cx, secY, 'COMMUNITY', () => {
       transitionTo(this, 'CommunityGallery');
     }, {
       width: secW, height: secH,
-      fillColor: 0x2a2a4e, strokeColor: 0x555577, strokeThickness: 1,
       fontSize: '13px',
+      style: 'secondary',
     });
 
     createButton(this, L.cx + secW + secGap, secY, 'HOW TO PLAY', () => {
       transitionTo(this, 'HowToPlay');
     }, {
       width: secW, height: secH,
-      fillColor: 0x2a2a4e, strokeColor: 0x555577, strokeThickness: 1,
       fontSize: '13px',
+      style: 'secondary',
     });
 
     // ── Gear icon (Settings) — top right ────────────
     const gearText = this.add.text(L.x(0.96), L.y(0.05), '\u2699', {
-      fontSize: L.fontSize('heading'), fontFamily: 'Arial', color: '#666688',
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    gearText.on('pointerover', () => gearText.setColor('#00ccff'));
-    gearText.on('pointerout', () => gearText.setColor('#666688'));
+    gearText.on('pointerover', () => gearText.setColor(THEME.primaryHex));
+    gearText.on('pointerout', () => gearText.setColor(THEME.textSecondary));
     gearText.on('pointerdown', () => {
       SoundManager.getInstance().menuClick();
       this.showSettings();
@@ -177,7 +180,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.text(L.cx, L.y(0.78), `v${version}  |  PYRGO GAMES`, {
       fontSize: L.fontSize('small'),
       fontFamily: 'Arial',
-      color: '#444466',
+      color: THEME.textSecondary,
     }).setOrigin(0.5, 1);
 
     // ── Menu music ──────────────────────────────────
@@ -218,25 +221,25 @@ export class MainMenuScene extends Phaser.Scene {
     // Version display
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
     const versionText = this.add.text(L.cx, L.y(0.35), `Version: ${version}`, {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setDepth(51);
 
     // Reset Data button
     const settingsBtnSize = L.button('normal');
     const resetBtn = createButton(this, L.cx, L.y(0.44), 'RESET DATA', () => {
       this.showResetConfirm();
-    }, { width: settingsBtnSize.width, height: settingsBtnSize.height, depth: 52, fillColor: 0x994444, strokeColor: 0xff4444 });
+    }, { width: settingsBtnSize.width, height: settingsBtnSize.height, depth: 52, style: 'danger' });
 
     // Credits button
     const creditsBtn = createButton(this, L.cx, L.y(0.53), 'CREDITS', () => {
       this.destroySettings();
       transitionTo(this, 'Credits');
-    }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height });
+    }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height, style: 'secondary' });
 
     // Close
     const closeBtn = createButton(this, L.cx, L.y(0.64), '\u2190 BACK', () => {
       this.destroySettings();
-    }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height });
+    }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height, style: 'ghost' });
 
     this.settingsElements = [overlay, titleText, soundBtn, versionText, resetBtn.container, creditsBtn.container, closeBtn.container];
   }
@@ -248,7 +251,7 @@ export class MainMenuScene extends Phaser.Scene {
       .setDepth(60).setInteractive();
 
     const confirmText = this.add.text(L.cx, L.y(0.33), 'Reset all data?\nThis cannot be undone.', {
-      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ff4444', align: 'center',
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: THEME.dangerHex, align: 'center',
     }).setOrigin(0.5).setDepth(61);
 
     const confirmElements: Phaser.GameObjects.GameObject[] = [confirmOverlay, confirmText];
@@ -261,13 +264,13 @@ export class MainMenuScene extends Phaser.Scene {
       noBtn.container.destroy();
       this.destroySettings();
       this.scene.restart();
-    }, { width: confirmBtnSize.width, height: confirmBtnSize.height, depth: 62, fillColor: 0x994444, strokeColor: 0xff4444 });
+    }, { width: confirmBtnSize.width, height: confirmBtnSize.height, depth: 62, style: 'danger' });
 
     const noBtn = createButton(this, L.cx + L.unit(0.15), L.y(0.45), 'CANCEL', () => {
       confirmElements.forEach(e => e.destroy());
       yesBtn.container.destroy();
       noBtn.container.destroy();
-    }, { width: confirmBtnSize.width, height: confirmBtnSize.height, depth: 62 });
+    }, { width: confirmBtnSize.width, height: confirmBtnSize.height, depth: 62, style: 'secondary' });
 
     confirmElements.push(yesBtn.container, noBtn.container);
   }

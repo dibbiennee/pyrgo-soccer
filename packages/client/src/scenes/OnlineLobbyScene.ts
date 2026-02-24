@@ -10,6 +10,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
 import { LayoutManager } from '../utils/LayoutManager';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 export class OnlineLobbyScene extends Phaser.Scene {
   private L!: LayoutManager;
@@ -49,17 +50,17 @@ export class OnlineLobbyScene extends Phaser.Scene {
     const sm = SoundManager.getInstance();
     sm.enabled = this.game.registry.get('soundOn') !== false;
 
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
+    drawGradientBackground(this);
 
     // Title
     this.add.text(L.cx, L.y(0.06), 'MATCH LOBBY', {
-      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Room code
     this.add.text(L.cx, L.y(0.10), `Room: ${this.roomCode}`, {
-      fontSize: L.fontSize('small'), fontFamily: 'Courier New, monospace', color: '#666688',
+      fontSize: L.fontSize('small'), fontFamily: 'Courier New, monospace', color: THEME.textSecondary,
     }).setOrigin(0.5);
 
     // --- Player displays ---
@@ -70,7 +71,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
     for (let idx = 0; idx < 2; idx++) {
       const playerInfo = this.players.find(p => p.playerIndex === idx + 1);
       const px = idx === 0 ? p1X : p2X;
-      const color = idx === 0 ? '#00ccff' : '#ff4444';
+      const color = idx === 0 ? THEME.primaryHex : '#ff4444';
 
       if (playerInfo) {
         const char = resolveCharacter(playerInfo.charRef);
@@ -84,7 +85,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         this.add.text(px, charY + L.unit(0.14), playerInfo.playerName, {
-          fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#aaaacc',
+          fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
         }).setOrigin(0.5);
 
         // Stats bars
@@ -104,13 +105,13 @@ export class OnlineLobbyScene extends Phaser.Scene {
         const superInfo = SUPER_MOVES.find(m => m.id === char.superMove);
         if (superInfo) {
           this.add.text(px, statsY + L.unit(0.08), `Super: ${superInfo.displayName}`, {
-            fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
+            fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.secondaryHex,
           }).setOrigin(0.5);
         }
 
         // Ready indicator
         const readyText = this.add.text(px, charY - L.unit(0.14), '', {
-          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#00ff66',
+          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: THEME.successHex,
         }).setOrigin(0.5);
         this.readyIndicators[idx] = readyText;
 
@@ -119,10 +120,10 @@ export class OnlineLobbyScene extends Phaser.Scene {
         }
       } else {
         this.add.text(px, charY, '?', {
-          fontSize: L.fontSize('title'), fontFamily: 'Arial', color: '#444466',
+          fontSize: L.fontSize('title'), fontFamily: 'Arial', color: THEME.textSecondary,
         }).setOrigin(0.5);
         this.add.text(px, charY + L.unit(0.08), 'Waiting...', {
-          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#666688',
+          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: THEME.textSecondary,
         }).setOrigin(0.5);
       }
     }
@@ -141,8 +142,8 @@ export class OnlineLobbyScene extends Phaser.Scene {
       sm.menuClick();
       this.socket.emit('PLAYER_READY', {});
       this.readyBtn!.label.setText('WAITING...');
-      this.readyBtn!.bg.setFillStyle(0x444466);
-    }, { width: btnLarge.width, height: btnLarge.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+      this.readyBtn!.redraw(0x333355);
+    }, { width: btnLarge.width, height: btnLarge.height, style: 'success' });
 
     // Leave button
     const btnSmall = L.button('small');
@@ -150,7 +151,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
       this.socket.emit('ROOM_LEAVE', {});
       this.cleanup();
       transitionTo(this, 'OnlineHub', { charRef: this.charRef });
-    }, { width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666 });
+    }, { width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), style: 'ghost' });
 
     // Countdown text (hidden initially)
     this.countdownText = this.add.text(L.cx, L.cy, '', {

@@ -7,6 +7,7 @@ import { SocketManager } from '../network/SocketManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
 import { LayoutManager } from '../utils/LayoutManager';
+import { THEME, drawGradientBackground } from '../ui/UITheme';
 
 interface MatchStats {
   shotsP1: number;
@@ -72,11 +73,11 @@ export class ResultScene extends Phaser.Scene {
     const appearance2: Appearance = char2.appearance ?? defaultAppearanceForPreset(char2.id);
 
     // Background
-    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0a0a1a);
+    drawGradientBackground(this);
 
     // ── "TEMPO SCADUTO" animated ────────────────────
     const tempoText = this.add.text(L.cx, L.y(0.06), 'TEMPO SCADUTO', {
-      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#aaaacc',
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: THEME.textSecondary,
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5).setScale(0);
 
@@ -169,7 +170,7 @@ export class ResultScene extends Phaser.Scene {
     // ── Match stats ─────────────────────────────────
     const statsY = L.y(0.60);
     this.add.text(L.cx, statsY, 'MATCH STATS', {
-      fontSize: L.fontSize('small'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
     }).setOrigin(0.5);
 
     const statRows = [
@@ -183,7 +184,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
       }).setOrigin(1, 0.5);
       this.add.text(L.cx, y, row.label, {
-        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#888899',
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: THEME.textSecondary,
       }).setOrigin(0.5);
       this.add.text(L.cx + L.unit(0.12), y, String(row.p2), {
         fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
@@ -195,7 +196,7 @@ export class ResultScene extends Phaser.Scene {
       for (let i = 0; i < 30; i++) {
         const x = Math.random() * L.w;
         const p = this.add.arc(x, -10, 3 + Math.random() * 3, 0, 360, false,
-          [0xffdd00, 0xff4400, 0x00ccff, 0xffffff][Math.floor(Math.random() * 4)]);
+          [0xffdd00, 0xff4400, THEME.primary, 0xffffff][Math.floor(Math.random() * 4)]);
         this.tweens.add({
           targets: p,
           y: L.h + 20,
@@ -215,14 +216,14 @@ export class ResultScene extends Phaser.Scene {
     if (this.gameMode === 'online') {
       this.rematchBtn = createButton(this, L.cx - L.unit(0.18), btnY, 'RIVINCITA', () => {
         this.requestOnlineRematch();
-      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+      }, { width: btnSize.width, height: btnSize.height, style: 'success' });
 
       createButton(this, L.cx + L.unit(0.18), btnY, 'MENU', () => {
         const socket = SocketManager.getInstance();
         socket.emit('ROOM_LEAVE', {});
         this.cleanupOnlineListeners();
         transitionTo(this, 'MainMenu');
-      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x444466, strokeColor: 0x666688 });
+      }, { width: btnSize.width, height: btnSize.height, style: 'secondary' });
 
       this.setupOnlineListeners();
     } else {
@@ -232,15 +233,15 @@ export class ResultScene extends Phaser.Scene {
           charRef2: this.charRef2,
           targetScene: 'CpuGame',
         });
-      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+      }, { width: btnSize.width, height: btnSize.height, style: 'success' });
 
       createButton(this, L.cx, btnY, 'CAMBIA PG', () => {
         transitionTo(this, 'CharSelect', { mode: this.gameMode });
-      }, { width: btnSize.width, height: btnSize.height });
+      }, { width: btnSize.width, height: btnSize.height, style: 'secondary' });
 
       createButton(this, L.cx + L.unit(0.27), btnY, 'MENU', () => {
         transitionTo(this, 'MainMenu');
-      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x444466, strokeColor: 0x666688 });
+      }, { width: btnSize.width, height: btnSize.height, style: 'secondary' });
     }
 
     // ── Sound ───────────────────────────────────────
@@ -261,7 +262,7 @@ export class ResultScene extends Phaser.Scene {
       SoundManager.getInstance().notificationPing();
       const L = this.L;
       const toast = this.add.text(L.cx, L.y(0.66), 'L\'avversario vuole la rivincita!', {
-        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.secondaryHex,
       }).setOrigin(0.5).setDepth(10);
       this.tweens.add({
         targets: toast, alpha: 0, delay: 3000, duration: 500,
@@ -284,8 +285,7 @@ export class ResultScene extends Phaser.Scene {
       this.opponentLeft = true;
       if (this.rematchBtn) {
         this.rematchBtn.label.setText('OPPONENT LEFT');
-        this.rematchBtn.bg.setFillStyle(0x444466);
-        this.rematchBtn.bg.removeInteractive();
+        this.rematchBtn.disable();
       }
     });
   }
@@ -299,7 +299,7 @@ export class ResultScene extends Phaser.Scene {
 
     if (this.rematchBtn) {
       this.rematchBtn.label.setText('WAITING...');
-      this.rematchBtn.bg.setFillStyle(0x444466);
+      this.rematchBtn.redraw(0x333355);
     }
   }
 

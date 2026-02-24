@@ -33,6 +33,7 @@ import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
 import { setupGameCamera } from '../utils/responsive';
+import { THEME } from '../ui/UITheme';
 
 interface ServerSnapshot {
   time: number;
@@ -70,10 +71,10 @@ export class OnlineGameScene extends Phaser.Scene {
   // ─── HUD ─────────────────────────────────────────────
   private scoreText!: Phaser.GameObjects.Text;
   private timerText!: Phaser.GameObjects.Text;
-  private superMeter1!: Phaser.GameObjects.Rectangle;
-  private superMeter1Bg!: Phaser.GameObjects.Rectangle;
-  private superMeter2!: Phaser.GameObjects.Rectangle;
-  private superMeter2Bg!: Phaser.GameObjects.Rectangle;
+  private superMeter1!: Phaser.GameObjects.Graphics;
+  private superMeter1Bg!: Phaser.GameObjects.Graphics;
+  private superMeter2!: Phaser.GameObjects.Graphics;
+  private superMeter2Bg!: Phaser.GameObjects.Graphics;
   private countdownText!: Phaser.GameObjects.Text;
   private pingIndicator!: Phaser.GameObjects.Text;
   private overtimeText?: Phaser.GameObjects.Text;
@@ -311,6 +312,12 @@ export class OnlineGameScene extends Phaser.Scene {
   private createHUD(): void {
     const hudTop = 35;
     const meterY = hudTop + 34;
+    const meterRadius = 3;
+
+    // HUD panel background
+    const hudPanel = this.add.graphics().setDepth(9);
+    hudPanel.fillStyle(THEME.hudBg, 0.65);
+    hudPanel.fillRoundedRect(GAME_WIDTH / 2 - 130, hudTop - 6, 260, 52, 10);
 
     this.scoreText = this.add.text(GAME_WIDTH / 2, hudTop, '0 - 0', {
       fontSize: '32px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
@@ -322,10 +329,18 @@ export class OnlineGameScene extends Phaser.Scene {
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5, 0).setDepth(10);
 
-    this.superMeter1Bg = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, 100, 8, 0x333333, 0.7).setOrigin(1, 0.5).setDepth(10);
-    this.superMeter1 = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, 0, 8, 0xffaa00).setOrigin(1, 0.5).setDepth(10);
-    this.superMeter2Bg = this.add.rectangle(GAME_WIDTH / 2 + 100, meterY, 100, 8, 0x333333, 0.7).setOrigin(0, 0.5).setDepth(10);
-    this.superMeter2 = this.add.rectangle(GAME_WIDTH / 2 + 100, meterY, 0, 8, 0xffaa00).setOrigin(0, 0.5).setDepth(10);
+    // Super meter backgrounds (rounded)
+    this.superMeter1Bg = this.add.graphics().setDepth(10);
+    this.superMeter1Bg.fillStyle(THEME.statBarEmpty, 0.7);
+    this.superMeter1Bg.fillRoundedRect(GAME_WIDTH / 2 - 200, meterY - 4, 100, 8, meterRadius);
+
+    this.superMeter1 = this.add.graphics().setDepth(10);
+
+    this.superMeter2Bg = this.add.graphics().setDepth(10);
+    this.superMeter2Bg.fillStyle(THEME.statBarEmpty, 0.7);
+    this.superMeter2Bg.fillRoundedRect(GAME_WIDTH / 2 + 100, meterY - 4, 100, 8, meterRadius);
+
+    this.superMeter2 = this.add.graphics().setDepth(10);
 
     this.countdownText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, '', {
       fontSize: '64px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
@@ -341,7 +356,7 @@ export class OnlineGameScene extends Phaser.Scene {
     const opponentChar = this.myPlayerIndex === 1 ? this.char2 : this.char1;
     const opX = this.myPlayerIndex === 1 ? GAME_WIDTH - 80 : 80;
     this.opponentNameText = this.add.text(opX, hudTop + 55, opponentChar.name, {
-      fontSize: '10px', fontFamily: 'Arial', color: '#aaaacc',
+      fontSize: '10px', fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setDepth(10);
 
     // Exit button
@@ -555,7 +570,7 @@ export class OnlineGameScene extends Phaser.Scene {
     this.disconnectCountdown = Math.ceil(timeoutMs / 1000);
     this.disconnectText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2,
       `Avversario disconnesso\nReconnecting... ${this.disconnectCountdown}s`, {
-        fontSize: '20px', fontFamily: 'Arial', color: '#ffaa00', align: 'center',
+        fontSize: '20px', fontFamily: 'Arial', color: THEME.secondaryHex, align: 'center',
       }).setOrigin(0.5).setDepth(151);
 
     this.disconnectTimer = setInterval(() => {
@@ -702,22 +717,34 @@ export class OnlineGameScene extends Phaser.Scene {
       this.timerText.setColor('#ffffff');
     }
 
-    // Super meters from server
+    // Super meters from server (rounded rect redraw)
+    const meterRadius = 3;
+    const meterHeight = 8;
+    const hudTopM = 35;
+    const meterYPos = hudTopM + 34;
     const p1Fill = (this.serverSuperMeter1 / SUPER_MAX) * 100;
     const p2Fill = (this.serverSuperMeter2 / SUPER_MAX) * 100;
-    this.superMeter1.setSize(p1Fill, 8);
-    this.superMeter2.setSize(p2Fill, 8);
+    const p1Full = this.serverSuperMeter1 >= SUPER_MAX;
+    const p2Full = this.serverSuperMeter2 >= SUPER_MAX;
 
-    // Super glow when full
-    if (this.serverSuperMeter1 >= SUPER_MAX) {
-      this.superMeter1.setFillStyle(0xffdd00);
-    } else {
-      this.superMeter1.setFillStyle(0xffaa00);
+    this.superMeter1.clear();
+    if (p1Fill > 0) {
+      if (p1Full) {
+        this.superMeter1.fillGradientStyle(0x00ff00, 0x00ff00, 0x00cc00, 0x00cc00);
+      } else {
+        this.superMeter1.fillGradientStyle(THEME.statBarFillStart, THEME.statBarFillStart, THEME.statBarFillEnd, THEME.statBarFillEnd);
+      }
+      this.superMeter1.fillRoundedRect(GAME_WIDTH / 2 - 100 - p1Fill, meterYPos - meterHeight / 2, p1Fill, meterHeight, meterRadius);
     }
-    if (this.serverSuperMeter2 >= SUPER_MAX) {
-      this.superMeter2.setFillStyle(0xffdd00);
-    } else {
-      this.superMeter2.setFillStyle(0xffaa00);
+
+    this.superMeter2.clear();
+    if (p2Fill > 0) {
+      if (p2Full) {
+        this.superMeter2.fillGradientStyle(0x00ff00, 0x00ff00, 0x00cc00, 0x00cc00);
+      } else {
+        this.superMeter2.fillGradientStyle(THEME.statBarFillStart, THEME.statBarFillStart, THEME.statBarFillEnd, THEME.statBarFillEnd);
+      }
+      this.superMeter2.fillRoundedRect(GAME_WIDTH / 2 + 100, meterYPos - meterHeight / 2, p2Fill, meterHeight, meterRadius);
     }
 
     // Ping indicator
