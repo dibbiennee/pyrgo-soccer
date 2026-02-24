@@ -6,6 +6,7 @@ export interface ButtonOptions {
   height?: number;
   fillColor?: number;
   strokeColor?: number;
+  strokeThickness?: number;
   fontSize?: string;
   fontFamily?: string;
   textColor?: string;
@@ -50,8 +51,10 @@ export function createButton(
 
   const container = scene.add.container(x, y).setDepth(depth);
 
+  const strokeThickness = options?.strokeThickness ?? 2;
+
   const bg = scene.add.rectangle(0, 0, w, h, fill, 0.9);
-  bg.setStrokeStyle(2, stroke);
+  bg.setStrokeStyle(strokeThickness, stroke);
   bg.setInteractive({ useHandCursor: true });
   container.add(bg);
 

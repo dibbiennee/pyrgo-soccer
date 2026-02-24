@@ -108,32 +108,57 @@ export class MainMenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // ── Buttons ─────────────────────────────────────
-    const leftX = L.cx - L.unit(0.35);
-    const rightX = L.cx + L.unit(0.35);
-    const btnSize = L.button('large');
+    // ── Primary buttons (play modes) ────────────────
+    const primaryW = Math.round(L.w * 0.28);
+    const primaryH = Math.round(L.h * 0.10);
+    const primaryGap = Math.round(L.w * 0.04);
+    const primaryY = L.y(0.42);
 
-    // Left column (play modes)
-    createButton(this, leftX, L.y(0.46), 'VS CPU', () => {
+    createButton(this, L.cx - primaryW / 2 - primaryGap / 2, primaryY, 'VS CPU', () => {
       transitionTo(this, 'CharSelect', { mode: 'cpu' });
-    }, { width: btnSize.width, height: btnSize.height });
+    }, {
+      width: primaryW, height: primaryH,
+      fillColor: 0x0a3355, strokeColor: 0x00ccff, strokeThickness: 3,
+      fontSize: '18px',
+    });
 
-    createButton(this, leftX, L.y(0.54), 'ONLINE MATCH', () => {
+    createButton(this, L.cx + primaryW / 2 + primaryGap / 2, primaryY, 'ONLINE MATCH', () => {
       transitionTo(this, 'CharSelect', { mode: 'online' });
-    }, { width: btnSize.width, height: btnSize.height });
+    }, {
+      width: primaryW, height: primaryH,
+      fillColor: 0x0a3355, strokeColor: 0x00ccff, strokeThickness: 3,
+      fontSize: '18px',
+    });
 
-    // Right column (character + community + how to play)
-    createButton(this, rightX, L.y(0.42), 'CREATE PLAYER', () => {
+    // ── Secondary buttons ─────────────────────────
+    const secW = Math.round(L.w * 0.20);
+    const secH = Math.round(L.h * 0.07);
+    const secGap = Math.round(L.w * 0.03);
+    const secY = L.y(0.58);
+
+    createButton(this, L.cx - secW - secGap, secY, 'CREATE PLAYER', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'MainMenu' });
-    }, { width: btnSize.width, height: btnSize.height });
+    }, {
+      width: secW, height: secH,
+      fillColor: 0x2a2a4e, strokeColor: 0x555577, strokeThickness: 1,
+      fontSize: '13px',
+    });
 
-    createButton(this, rightX, L.y(0.50), 'COMMUNITY', () => {
+    createButton(this, L.cx, secY, 'COMMUNITY', () => {
       transitionTo(this, 'CommunityGallery');
-    }, { width: btnSize.width, height: btnSize.height });
+    }, {
+      width: secW, height: secH,
+      fillColor: 0x2a2a4e, strokeColor: 0x555577, strokeThickness: 1,
+      fontSize: '13px',
+    });
 
-    createButton(this, rightX, L.y(0.58), 'HOW TO PLAY', () => {
+    createButton(this, L.cx + secW + secGap, secY, 'HOW TO PLAY', () => {
       transitionTo(this, 'HowToPlay');
-    }, { width: btnSize.width, height: btnSize.height });
+    }, {
+      width: secW, height: secH,
+      fillColor: 0x2a2a4e, strokeColor: 0x555577, strokeThickness: 1,
+      fontSize: '13px',
+    });
 
     // ── Gear icon (Settings) — top right ────────────
     const gearText = this.add.text(L.x(0.96), L.y(0.05), '\u2699', {
