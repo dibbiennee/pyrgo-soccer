@@ -164,7 +164,7 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     // ── Gear icon (Settings) — top right ────────────
-    const gearText = this.add.text(L.x(0.96), L.y(0.05), '\u2699', {
+    const gearText = this.add.text(L.x(0.91), L.y(0.08), '\u2699', {
       fontSize: L.fontSize('heading'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 

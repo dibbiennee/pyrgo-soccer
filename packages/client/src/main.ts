@@ -92,10 +92,14 @@ if ('serviceWorker' in navigator) {
 }
 
 // ─── Auto-start music on first user interaction ────
+// Browsers block audio autoplay without a user gesture.
+// MainMenuScene may call music.start() before any gesture, so play() fails silently.
+// This listener ensures we retry within an actual user gesture context.
 import { MusicManager } from './audio/MusicManager';
 function startMusicOnce(): void {
   const music = MusicManager.getInstance();
-  music.start();
+  music.start();   // no-op if already started, but sets up audio
+  music.resume();  // retry play within user gesture context
   document.removeEventListener('click', startMusicOnce);
   document.removeEventListener('touchstart', startMusicOnce);
   document.removeEventListener('keydown', startMusicOnce);
