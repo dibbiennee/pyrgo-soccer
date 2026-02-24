@@ -53,13 +53,13 @@ export class CharSelectScene extends Phaser.Scene {
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
     // Title
-    this.add.text(L.cx, L.y(0.06), 'SELECT YOUR FIGHTER', {
+    this.add.text(L.cx, L.y(0.05), 'SELECT YOUR FIGHTER', {
       fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Selection indicator
-    this.selectionIndicator = this.add.text(L.cx, L.y(0.095), 'Player 1 \u2014 Choose!', {
+    this.selectionIndicator = this.add.text(L.cx, L.y(0.09), 'Player 1 \u2014 Choose!', {
       fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 
@@ -130,7 +130,7 @@ export class CharSelectScene extends Phaser.Scene {
     const tabH = 28;
     const gap = L.pad(0.5);
     const startX = L.cx - (tabs.length * (tabW + gap)) / 2 + tabW / 2;
-    const y = L.y(0.13);
+    const y = L.y(0.14);
 
     tabs.forEach((tab, i) => {
       const x = startX + i * (tabW + gap);
