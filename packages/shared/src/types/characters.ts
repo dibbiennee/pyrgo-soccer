@@ -14,7 +14,8 @@ export type SuperMoveId =
   | 'ironWall'
   | 'poisonShot'
   | 'iceField'
-  | 'fireCapriole';
+  | 'fireCapriole'
+  | 'terremoto';
 
 export interface SuperMoveInfo {
   id: SuperMoveId;
@@ -31,6 +32,7 @@ export const SUPER_MOVES: SuperMoveInfo[] = [
   { id: 'poisonShot', displayName: 'Tornado', description: 'Ball turns green, next goal counts double', color: 0x88ff00 },
   { id: 'iceField', displayName: 'Meteor', description: '3s icy field, opponent slides', color: 0x88ddff },
   { id: 'fireCapriole', displayName: 'A Mi', description: 'Fire capriole — 3x kick toward goal, fire trail', color: 0xff4400 },
+  { id: 'terremoto', displayName: 'Terremoto', description: 'Earthquake — 2.5x kick toward goal, opponent stunned', color: 0x8b4513 },
 ];
 
 export interface CharacterDef {
@@ -81,6 +83,21 @@ export const CHARACTERS: CharacterDef[] = [
       faceShape: 'square', hairStyle: 'short', hairColor: 0x1a1a1a,
       skinTone: 0xd4a574, eyeStyle: 'cool', beard: 'stubble',
       jerseyColor1: 0x1a5276, jerseyColor2: 0xffffff, jerseyNumber: 10,
+    },
+  },
+  {
+    id: 3,
+    name: 'GIORGITO',
+    stats: { speed: 5, power: 7, defense: 6 },
+    superMove: 'terremoto',
+    superDescription: 'Terremoto — earthquake stun, 2.5x kick toward goal',
+    color: 0x8b4513,
+    headColor: 0xf5c4a1,
+    accentColor: 0xdaa520,
+    appearance: {
+      faceShape: 'round', hairStyle: 'curly', hairColor: 0x2c1b18,
+      skinTone: 0xf5c4a1, eyeStyle: 'happy', beard: 'goatee',
+      jerseyColor1: 0x8b4513, jerseyColor2: 0xdaa520, jerseyNumber: 5,
     },
   },
 ];

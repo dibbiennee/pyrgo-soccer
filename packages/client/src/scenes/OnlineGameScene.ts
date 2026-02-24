@@ -738,8 +738,45 @@ export class OnlineGameScene extends Phaser.Scene {
           }
           MusicManager.getInstance().unduckAfterSuper();
         }, 1800);
+      } else if (data.superMoveId === 'terremoto') {
+        // Terremoto special effects: earthquake shake, earth particles, SFX
+        const container = data.playerIndex === 1 ? this.player1Container : this.player2Container;
+        MusicManager.getInstance().playEffect('/sfx/giorgito.mp3', 0.5);
+
+        // Strong camera shake (earthquake)
+        this.cameras.main.shake(500, 8 / 1000);
+
+        // Earth/dust particles at player's feet
+        for (let i = 0; i < 20; i++) {
+          const px = container.x + (Math.random() - 0.5) * 80;
+          const py = GROUND_Y - 5;
+          const dust = this.add.arc(px, py, 2 + Math.random() * 3, 0, 360, false,
+            Math.random() < 0.5 ? 0x8b7355 : 0xdaa520, 0.8).setDepth(10);
+          this.tweens.add({
+            targets: dust,
+            y: py - 20 - Math.random() * 40,
+            x: px + (Math.random() - 0.5) * 30,
+            alpha: 0,
+            scale: 0.3,
+            duration: 400 + Math.random() * 300,
+            onComplete: () => dust.destroy(),
+          });
+        }
+
+        // Stun visual on opponent — flash alpha
+        const opponentContainer = data.playerIndex === 1 ? this.player2Container : this.player1Container;
+        const flashInterval = setInterval(() => {
+          opponentContainer.setAlpha(opponentContainer.alpha < 1 ? 1 : 0.3);
+        }, 100);
+        setTimeout(() => {
+          clearInterval(flashInterval);
+          opponentContainer.setAlpha(1);
+        }, 800);
+
+        // Unduck after 1s
+        setTimeout(() => MusicManager.getInstance().unduckAfterSuper(), 1000);
       } else {
-        // Non-fireCapriole supers: unduck after estimated duration
+        // Other supers: unduck after estimated duration
         const dur = data.superMoveId === 'flameDash' ? 2000 :
                     data.superMoveId === 'ghostPhase' ? 2500 :
                     data.superMoveId === 'ironWall' || data.superMoveId === 'iceField' ? 3000 : 1500;

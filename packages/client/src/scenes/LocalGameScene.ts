@@ -405,27 +405,21 @@ export class LocalGameScene extends Phaser.Scene {
     this.player1.on('fireCaprioleStart', () => this.startFireCapriole(this.player1));
     this.player2.on('fireCaprioleStart', () => this.startFireCapriole(this.player2));
 
-    // Unduck music when non-fireCapriole supers end
-    const onSuperEnd = (p: Player) => {
-      if (p.characterDef.superMove !== 'fireCapriole') {
-        MusicManager.getInstance().unduckAfterSuper();
-      }
-    };
-    // flameDash/ghostPhase/ironWall/iceField have timers — unduck handled in their end callbacks
-    // For simplicity, set a delayed unduck for non-fireCapriole supers
+    // terremoto full sequence handler
+    this.player1.on('terremotoStart', () => this.startTerremoto(this.player1));
+    this.player2.on('terremotoStart', () => this.startTerremoto(this.player2));
+
+    // Unduck music when non-phased supers end
+    const phasedSupers: string[] = ['fireCapriole', 'terremoto', 'thunderKick', 'poisonShot'];
     this.player1.on('superActivated', () => {
-      if (this.player1.characterDef.superMove !== 'fireCapriole' &&
-          this.player1.characterDef.superMove !== 'thunderKick' &&
-          this.player1.characterDef.superMove !== 'poisonShot') {
+      if (!phasedSupers.includes(this.player1.characterDef.superMove)) {
         const dur = this.player1.characterDef.superMove === 'flameDash' ? 2000 :
                     this.player1.characterDef.superMove === 'ghostPhase' ? 2500 : 3000;
         this.time.delayedCall(dur, () => MusicManager.getInstance().unduckAfterSuper());
       }
     });
     this.player2.on('superActivated', () => {
-      if (this.player2.characterDef.superMove !== 'fireCapriole' &&
-          this.player2.characterDef.superMove !== 'thunderKick' &&
-          this.player2.characterDef.superMove !== 'poisonShot') {
+      if (!phasedSupers.includes(this.player2.characterDef.superMove)) {
         const dur = this.player2.characterDef.superMove === 'flameDash' ? 2000 :
                     this.player2.characterDef.superMove === 'ghostPhase' ? 2500 : 3000;
         this.time.delayedCall(dur, () => MusicManager.getInstance().unduckAfterSuper());
@@ -1428,6 +1422,91 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════
+  // TERREMOTO — earthquake super move
+  // ═══════════════════════════════════════════════════
+  private startTerremoto(player: Player): void {
+    // Play SFX
+    MusicManager.getInstance().playEffect('/sfx/giorgito.mp3', 0.5);
+
+    // Freeze physics briefly (300ms)
+    this.physics.pause();
+
+    // Brown screen flash
+    const flash = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x8b4513, 0.5)
+      .setDepth(150);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 300,
+      onComplete: () => flash.destroy(),
+    });
+
+    // Strong camera shake (earthquake)
+    this.cameras.main.shake(500, 8 / 1000);
+
+    // Earth/dust particles at player's feet
+    for (let i = 0; i < 20; i++) {
+      const px = player.x + (Math.random() - 0.5) * 80;
+      const py = GROUND_Y - 5;
+      const dust = this.add.arc(px, py, 2 + Math.random() * 3, 0, 360, false,
+        Math.random() < 0.5 ? 0x8b7355 : 0xdaa520, 0.8).setDepth(10);
+      this.tweens.add({
+        targets: dust,
+        y: py - 20 - Math.random() * 40,
+        x: px + (Math.random() - 0.5) * 30,
+        alpha: 0,
+        scale: 0.3,
+        duration: 400 + Math.random() * 300,
+        onComplete: () => dust.destroy(),
+      });
+    }
+
+    // After 300ms: resume physics, launch ball, stun opponent
+    this.time.delayedCall(300, () => {
+      this.physics.resume();
+
+      // Launch ball at 2.5x force toward opponent's goal
+      const force = player.kickForce * 2.5;
+      const toGoalDir = player.playerIndex === 1 ? 1 : -1;
+      this.ball.body.setVelocity(toGoalDir * force, -0.3 * force);
+      this.ball.superTrailColor = 0xdaa520;
+
+      // Track shot + charge super
+      player.chargeSuperFromKick();
+      this.sound_mgr.kick();
+      if (player.playerIndex === 1) this.shotsP1++;
+      else this.shotsP2++;
+
+      // Stun opponent (disable input for 800ms)
+      const opponent = player.playerIndex === 1 ? this.player2 : this.player1;
+      const savedSpeed = opponent.moveSpeed;
+      opponent.moveSpeed = 0;
+      opponent.body.setVelocityX(0);
+
+      // Stun visual — flash opponent red
+      const flashInterval = setInterval(() => {
+        opponent.setAlpha(opponent.alpha < 1 ? 1 : 0.3);
+      }, 100);
+
+      this.time.delayedCall(800, () => {
+        clearInterval(flashInterval);
+        opponent.setAlpha(1);
+        opponent.moveSpeed = savedSpeed;
+      });
+
+      // Reset player state
+      player.terremotoActive = false;
+      player.superActive = false;
+
+      // Clear trail after 2s
+      this.time.delayedCall(2000, () => { this.ball.superTrailColor = null; });
+
+      // Unduck music
+      MusicManager.getInstance().unduckAfterSuper();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
   // MOVEMENT EFFECTS — tilt, squash/stretch, dust
   // ═══════════════════════════════════════════════════
   private handleMovementEffects(): void {
@@ -1449,8 +1528,8 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   private handlePlayerMovement(player: Player): void {
-    // Skip tilt during fireCapriole (angle controlled by rotation tween)
-    if (player.fireCaprioleActive) return;
+    // Skip tilt during phased supers
+    if (player.fireCaprioleActive || player.terremotoActive) return;
 
     // Running tilt 3-5°
     const vx = player.body.velocity.x;

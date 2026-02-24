@@ -63,6 +63,11 @@ export function defaultAppearanceForPreset(presetId: number): Appearance {
       skinTone: 0xd4a574, eyeStyle: 'cool', beard: 'stubble',
       jerseyColor1: 0x1a5276, jerseyColor2: 0xffffff, jerseyNumber: 10,
     },
+    3: { // GIORGITO
+      faceShape: 'round', hairStyle: 'curly', hairColor: 0x2c1b18,
+      skinTone: 0xf5c4a1, eyeStyle: 'happy', beard: 'goatee',
+      jerseyColor1: 0x8b4513, jerseyColor2: 0xdaa520, jerseyNumber: 5,
+    },
   };
   return defaults[presetId] ?? defaults[1];
 }

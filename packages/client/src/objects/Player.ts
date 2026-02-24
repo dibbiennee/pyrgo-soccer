@@ -47,6 +47,7 @@ export class Player extends Phaser.GameObjects.Container {
   public poisonShotActive = false;
   public iceFieldActive = false;
   public fireCaprioleActive = false;
+  public terremotoActive = false;
 
   // Computed stats
   public moveSpeed: number;
@@ -269,6 +270,12 @@ export class Player extends Phaser.GameObjects.Container {
         this.fireCaprioleActive = true;
         // Scene handles the full sequence (freeze → jump → attract → kick)
         this.emit('fireCaprioleStart');
+        break;
+
+      case 'terremoto':
+        this.terremotoActive = true;
+        // Scene handles the full sequence (freeze → earthquake → kick)
+        this.emit('terremotoStart');
         break;
     }
   }

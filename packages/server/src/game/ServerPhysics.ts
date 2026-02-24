@@ -58,6 +58,9 @@ export interface PhysicsPlayer {
   iceFieldActive: boolean;
   fireCapriolePhase: number;  // 0=inactive, 1=freeze(200ms), 2=attract+capriole(1600ms)
   fireCaprioleTimer: number;
+  terremotoPhase: number;  // 0=inactive, 1=freeze(300ms), 2=done
+  terremotoTimer: number;
+  stunnedTimer: number;  // ms remaining — opponent can't move when > 0
 }
 
 export interface PhysicsState {
@@ -99,6 +102,9 @@ export class ServerPhysics {
       iceFieldActive: false,
       fireCapriolePhase: 0,
       fireCaprioleTimer: 0,
+      terremotoPhase: 0,
+      terremotoTimer: 0,
+      stunnedTimer: 0,
     };
   }
 
@@ -146,9 +152,27 @@ export class ServerPhysics {
   private static processPlayerInput(player: PhysicsPlayer, input: InputState, state: PhysicsState, dtSec: number, dtMs: number): void {
     const s = player.state;
 
+    // Stun: player can't move or act (from opponent's terremoto)
+    if (player.stunnedTimer > 0) {
+      player.stunnedTimer -= dtMs;
+      s.vx = 0;
+      // Still apply gravity + position
+      s.vy += GRAVITY * dtSec;
+      s.y += s.vy * dtSec;
+      const halfH = PLAYER_TOTAL_HEIGHT / 2;
+      if (s.y + halfH >= GROUND_Y) { s.y = GROUND_Y - halfH; s.vy = 0; s.jumpsRemaining = MAX_JUMPS; }
+      return;
+    }
+
     // fireCapriole phases override normal input
     if (player.fireCapriolePhase > 0) {
       this.updateFireCapriole(player, state, dtSec, dtMs);
+      return;
+    }
+
+    // terremoto phases override normal input
+    if (player.terremotoPhase > 0) {
+      this.updateTerremoto(player, state, dtSec, dtMs);
       return;
     }
 
@@ -289,6 +313,11 @@ export class ServerPhysics {
         player.fireCapriolePhase = 1;
         player.fireCaprioleTimer = 200;
         // Don't set superTimer — fireCapriole manages its own phased timer
+        break;
+      case 'terremoto':
+        player.terremotoPhase = 1;
+        player.terremotoTimer = 300;
+        // Don't set superTimer — terremoto manages its own phased timer
         break;
     }
   }
@@ -564,6 +593,39 @@ export class ServerPhysics {
     }
   }
 
+  private static updateTerremoto(player: PhysicsPlayer, state: PhysicsState, _dtSec: number, dtMs: number): void {
+    const s = player.state;
+    player.terremotoTimer -= dtMs;
+
+    if (player.terremotoPhase === 1) {
+      // Freeze phase — player doesn't move (300ms)
+      s.vx = 0;
+      s.vy = 0;
+
+      if (player.terremotoTimer <= 0) {
+        // Phase 2: launch ball + stun opponent
+        player.terremotoPhase = 0;
+        player.terremotoTimer = 0;
+        s.superActive = false;
+
+        // Launch ball at 2.5x force toward opponent's goal
+        const ball = state.ball;
+        const force = player.kickForce * 2.5;
+        const toGoalDir = s.id === 1 ? 1 : -1;
+        ball.vx = toGoalDir * force;
+        ball.vy = -0.3 * force;
+
+        // Stun opponent for 800ms
+        const opponent = state.players[s.id === 1 ? 1 : 0];
+        opponent.stunnedTimer = 800;
+
+        // Charge super + emit kick event
+        s.superMeter = Math.min(SUPER_MAX, s.superMeter + SUPER_CHARGE_KICK);
+        state.events.push({ type: 'kick', playerIndex: s.id });
+      }
+    }
+  }
+
   static checkGoal(ball: BallState): number | null {
     // Left goal (Player 2 scores)
     if (ball.x - BALL_RADIUS <= GOAL_LEFT_X + GOAL_WIDTH &&
@@ -598,5 +660,8 @@ export class ServerPhysics {
     player.ghostKickDelay = 0;
     player.fireCapriolePhase = 0;
     player.fireCaprioleTimer = 0;
+    player.terremotoPhase = 0;
+    player.terremotoTimer = 0;
+    player.stunnedTimer = 0;
   }
 }

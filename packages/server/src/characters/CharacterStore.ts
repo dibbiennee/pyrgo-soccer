@@ -104,9 +104,10 @@ export class CharacterStore {
   }
 
   private seedDefaults(): void {
+    const serverIds = ['system_canter', 'system_er_mancino', 'system_giorgito'];
     const seeds = CHARACTERS.map((char, i) => ({
       char,
-      serverId: i === 0 ? 'system_canter' : 'system_er_mancino',
+      serverId: serverIds[i] ?? `system_${char.name.toLowerCase().replace(/\s/g, '_')}`,
     }));
 
     let changed = false;

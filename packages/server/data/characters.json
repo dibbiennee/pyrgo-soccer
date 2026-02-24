@@ -193,5 +193,34 @@
     "isPublic": true,
     "serverId": "system_canter",
     "createdAt": 1771968034658
+  },
+  {
+    "id": 3,
+    "name": "GIORGITO",
+    "stats": {
+      "speed": 5,
+      "power": 7,
+      "defense": 6
+    },
+    "superMove": "terremoto",
+    "superDescription": "Terremoto — earthquake stun, 2.5x kick toward goal",
+    "color": 9127187,
+    "headColor": 16106657,
+    "accentColor": 14329120,
+    "appearance": {
+      "faceShape": "round",
+      "hairStyle": "curly",
+      "hairColor": 2890520,
+      "skinTone": 16106657,
+      "eyeStyle": "happy",
+      "beard": "goatee",
+      "jerseyColor1": 9127187,
+      "jerseyColor2": 14329120,
+      "jerseyNumber": 5
+    },
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771970790026
   }
 ]
