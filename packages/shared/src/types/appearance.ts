@@ -53,7 +53,7 @@ export const JERSEY_COLORS: number[] = [
 // ─── Default Appearance for Preset Characters ────────────────
 export function defaultAppearanceForPreset(presetId: number): Appearance {
   const defaults: Record<number, Appearance> = {
-    1: { // CANTER
+    1: { // COTOLETTA
       faceShape: 'oval', hairStyle: 'short', hairColor: 0x4a2912,
       skinTone: 0xe0a877, eyeStyle: 'angry', beard: 'stubble',
       jerseyColor1: 0xcc2222, jerseyColor2: 0xffffff, jerseyNumber: 7,

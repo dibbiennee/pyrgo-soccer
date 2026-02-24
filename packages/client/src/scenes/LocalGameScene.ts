@@ -875,7 +875,12 @@ export class LocalGameScene extends Phaser.Scene {
     if (this.player2.poisonShotActive) this.player2.consumePoisonShot();
 
     // Goal effects
-    this.sound_mgr.goal();
+    const scorer = scoringPlayer === 1 ? this.player1 : this.player2;
+    if (scorer.characterDef.id === 1) {
+      MusicManager.getInstance().playEffect('/sfx/cotoletta.mp3', 0.5);
+    } else {
+      this.sound_mgr.goal();
+    }
     this.showGoalEffect(scoringPlayer);
 
     // Check for win

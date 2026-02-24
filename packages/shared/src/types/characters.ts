@@ -55,7 +55,7 @@ export interface CustomCharacterDef extends CharacterDef {
 export const CHARACTERS: CharacterDef[] = [
   {
     id: 1,
-    name: 'CANTER',
+    name: 'COTOLETTA',
     stats: { speed: 7, power: 5, defense: 5 },
     superMove: 'flameDash',
     superDescription: 'Flame Dash — 2s dash at 2x speed, kick at 2x power, fire trail',

@@ -1,0 +1,197 @@
+[
+  {
+    "id": 1,
+    "name": "COTOLETTA",
+    "stats": {
+      "speed": 7,
+      "power": 5,
+      "defense": 5
+    },
+    "superMove": "flameDash",
+    "superDescription": "Flame Dash — 2s dash at 2x speed, kick at 2x power, fire trail",
+    "color": 13378082,
+    "headColor": 14723191,
+    "accentColor": 16746496,
+    "appearance": {
+      "faceShape": "oval",
+      "hairStyle": "short",
+      "hairColor": 4860178,
+      "skinTone": 14723191,
+      "eyeStyle": "angry",
+      "beard": "stubble",
+      "jerseyColor1": 13378082,
+      "jerseyColor2": 16777215,
+      "jerseyNumber": 7
+    },
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_canter",
+    "createdAt": 1771947200001
+  },
+  {
+    "id": 2,
+    "name": "ER MANCINO",
+    "stats": {
+      "speed": 6,
+      "power": 6,
+      "defense": 5
+    },
+    "superMove": "fireCapriole",
+    "superDescription": "A MI — fire capriole, 2x kick toward goal, fire trail 2s",
+    "color": 1725046,
+    "headColor": 13935988,
+    "accentColor": 16729088,
+    "appearance": {
+      "faceShape": "square",
+      "hairStyle": "short",
+      "hairColor": 1710618,
+      "skinTone": 13935988,
+      "eyeStyle": "cool",
+      "beard": "stubble",
+      "jerseyColor1": 1725046,
+      "jerseyColor2": 16777215,
+      "jerseyNumber": 10
+    },
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771947200001
+  },
+  {
+    "id": 1,
+    "name": "BLAZE",
+    "stats": {
+      "speed": 8,
+      "power": 5,
+      "defense": 4
+    },
+    "superMove": "flameDash",
+    "superDescription": "Flame Dash — 2s dash at 2x speed, kick at 2x power, fire trail",
+    "color": 16729122,
+    "headColor": 16737860,
+    "accentColor": 16746496,
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_canter",
+    "createdAt": 1771947200012
+  },
+  {
+    "id": 2,
+    "name": "TITAN",
+    "stats": {
+      "speed": 4,
+      "power": 7,
+      "defense": 6
+    },
+    "superMove": "thunderKick",
+    "superDescription": "Thunder Kick — next kick at 3x power, ball ignores gravity for 0.5s",
+    "color": 4482764,
+    "headColor": 5601245,
+    "accentColor": 16772608,
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771947200012
+  },
+  {
+    "id": 3,
+    "name": "SHADOW",
+    "stats": {
+      "speed": 9,
+      "power": 4,
+      "defense": 4
+    },
+    "superMove": "ghostPhase",
+    "superDescription": "Ghost Phase — 2s intangibility, pass through ball and opponent, then teleport kick",
+    "color": 4465254,
+    "headColor": 5583735,
+    "accentColor": 11158783,
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771947200012
+  },
+  {
+    "id": 4,
+    "name": "GUARDIAN",
+    "stats": {
+      "speed": 3,
+      "power": 5,
+      "defense": 9
+    },
+    "superMove": "ironWall",
+    "superDescription": "Iron Wall — 3s energy wall in front of own goal, blocks everything",
+    "color": 8947848,
+    "headColor": 11184810,
+    "accentColor": 52479,
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771947200012
+  },
+  {
+    "id": 5,
+    "name": "VIPER",
+    "stats": {
+      "speed": 7,
+      "power": 6,
+      "defense": 4
+    },
+    "superMove": "poisonShot",
+    "superDescription": "Poison Shot — ball turns green, next goal counts double",
+    "color": 2271812,
+    "headColor": 3390293,
+    "accentColor": 8978176,
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771947200012
+  },
+  {
+    "id": 6,
+    "name": "FROST",
+    "stats": {
+      "speed": 5,
+      "power": 6,
+      "defense": 6
+    },
+    "superMove": "iceField",
+    "superDescription": "Ice Field — 3s icy field, opponent slides with low friction",
+    "color": 4504541,
+    "headColor": 6741503,
+    "accentColor": 16777215,
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_er_mancino",
+    "createdAt": 1771947200012
+  },
+  {
+    "id": 1,
+    "name": "COTOLETTA",
+    "stats": {
+      "speed": 7,
+      "power": 5,
+      "defense": 5
+    },
+    "superMove": "flameDash",
+    "superDescription": "Flame Dash — 2s dash at 2x speed, kick at 2x power, fire trail",
+    "color": 13378082,
+    "headColor": 14723191,
+    "accentColor": 16746496,
+    "appearance": {
+      "faceShape": "oval",
+      "hairStyle": "short",
+      "hairColor": 4860178,
+      "skinTone": 14723191,
+      "eyeStyle": "angry",
+      "beard": "stubble",
+      "jerseyColor1": 13378082,
+      "jerseyColor2": 16777215,
+      "jerseyNumber": 7
+    },
+    "creatorDeviceId": "system",
+    "isPublic": true,
+    "serverId": "system_canter",
+    "createdAt": 1771968034658
+  }
+]

@@ -458,7 +458,12 @@ export class OnlineGameScene extends Phaser.Scene {
 
     this.socket.on('GOAL_SCORED', (data: { scoringPlayer: number; newScore: ScoreState; points: number }) => {
       this.score = data.newScore;
-      this.sound_mgr.goal();
+      const goalScorer = data.scoringPlayer === 1 ? this.char1 : this.char2;
+      if (goalScorer.id === 1) {
+        MusicManager.getInstance().playEffect('/sfx/cotoletta.mp3', 0.5);
+      } else {
+        this.sound_mgr.goal();
+      }
 
       // Strong shake (5px / 300ms)
       this.cameras.main.shake(300, 5 / 1000);
