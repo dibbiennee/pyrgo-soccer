@@ -52,13 +52,13 @@ export class OnlineLobbyScene extends Phaser.Scene {
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
     // Title
-    this.add.text(L.cx, L.y(0.04), 'MATCH LOBBY', {
+    this.add.text(L.cx, L.y(0.06), 'MATCH LOBBY', {
       fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Room code
-    this.add.text(L.cx, L.y(0.08), `Room: ${this.roomCode}`, {
+    this.add.text(L.cx, L.y(0.10), `Room: ${this.roomCode}`, {
       fontSize: L.fontSize('small'), fontFamily: 'Courier New, monospace', color: '#666688',
     }).setOrigin(0.5);
 

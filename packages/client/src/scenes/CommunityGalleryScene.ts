@@ -35,8 +35,8 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
 
     // Title
-    this.add.text(L.cx, L.y(0.04), 'COMMUNITY PLAYERS', {
-      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.06), 'COMMUNITY', {
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00e5ff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
 
@@ -96,7 +96,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     const spacing = cardSize + cardGap;
     const totalW = 5 * spacing;
     const startX = L.cx - totalW / 2;
-    const y = L.y(0.28);
+    const y = L.y(0.30);
 
     for (let i = 0; i < 6; i++) {
       const x = startX + i * spacing;
@@ -161,7 +161,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     const spacing = cardSize + cardGap;
     const totalW = (Math.min(pageChars.length, 6) - 1) * spacing;
     const startX = L.cx - totalW / 2;
-    const y = L.y(0.28);
+    const y = L.y(0.30);
 
     pageChars.forEach((char, i) => {
       const x = startX + (i % 6) * spacing;
@@ -198,7 +198,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.detailContainer.removeAll(true);
     this.selectedChar = char;
     const L = this.L;
-    const startY = L.y(0.55);
+    const startY = L.y(0.57);
 
     const nameText = this.add.text(L.cx, startY, char.name, {
       fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#ffffff',

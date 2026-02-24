@@ -42,7 +42,7 @@ export class OnlineHubScene extends Phaser.Scene {
 
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
-    this.add.text(L.cx, L.y(0.04), 'ONLINE MATCH', {
+    this.add.text(L.cx, L.y(0.06), 'ONLINE MATCH', {
       fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
@@ -50,13 +50,13 @@ export class OnlineHubScene extends Phaser.Scene {
     // Mini character preview
     const char = resolveCharacter(this.charRef);
     const appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
-    CharacterRenderer.renderMiniPreview(this, appearance, L.cx, L.y(0.14), L.unit(0.002));
-    this.add.text(L.cx, L.y(0.19), char.name, {
+    CharacterRenderer.renderMiniPreview(this, appearance, L.cx, L.y(0.15), L.unit(0.002));
+    this.add.text(L.cx, L.y(0.20), char.name, {
       fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#aaaacc',
     }).setOrigin(0.5);
 
     // Status text
-    this.statusText = this.add.text(L.cx, L.y(0.23), '', {
+    this.statusText = this.add.text(L.cx, L.y(0.24), '', {
       fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 

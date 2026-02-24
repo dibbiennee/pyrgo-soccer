@@ -75,7 +75,7 @@ export class ResultScene extends Phaser.Scene {
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0a0a1a);
 
     // ── "TEMPO SCADUTO" animated ────────────────────
-    const tempoText = this.add.text(L.cx, L.y(0.04), 'TEMPO SCADUTO', {
+    const tempoText = this.add.text(L.cx, L.y(0.06), 'TEMPO SCADUTO', {
       fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#aaaacc',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5).setScale(0);

@@ -133,7 +133,7 @@ export class CharacterCreatorScene extends Phaser.Scene {
     const tabH = 28;
     const gap = L.unit(0.015);
     const startX = L.x(0.27);
-    const y = L.y(0.04);
+    const y = L.y(0.06);
 
     TABS.forEach((tab, i) => {
       const x = startX + i * (tabW + gap);
