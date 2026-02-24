@@ -10,7 +10,7 @@ import { SocketManager } from '../network/SocketManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 export class OnlineLobbyScene extends Phaser.Scene {
   private socket!: SocketManager;
@@ -44,6 +44,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     const sm = SoundManager.getInstance();
     sm.enabled = this.game.registry.get('soundOn') !== false;
@@ -51,13 +52,13 @@ export class OnlineLobbyScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, 20, 'MATCH LOBBY', {
+    this.add.text(GAME_WIDTH / 2, edges.top + 10, 'MATCH LOBBY', {
       fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Room code
-    this.add.text(GAME_WIDTH / 2, 48, `Room: ${this.roomCode}`, {
+    this.add.text(GAME_WIDTH / 2, edges.top + 35, `Room: ${this.roomCode}`, {
       fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#666688',
     }).setOrigin(0.5);
 
@@ -136,7 +137,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0.5);
 
     // ─── READY button ─────────────────────────────────
-    this.readyBtn = createButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 55, 'PRONTO', () => {
+    this.readyBtn = createButton(this, GAME_WIDTH / 2, edges.bottom - 38, 'PRONTO', () => {
       if (this.imReady) return;
       this.imReady = true;
       sm.menuClick();
@@ -146,7 +147,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
     }, { width: 180, height: 42, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 
     // Back button
-    createButton(this, 60, GAME_HEIGHT - 30, '\u2190 LEAVE', () => {
+    createButton(this, edges.left + 60, edges.bottom - 15, '\u2190 LEAVE', () => {
       this.socket.emit('ROOM_LEAVE', {});
       this.cleanup();
       transitionTo(this, 'OnlineHub', { charRef: this.charRef });

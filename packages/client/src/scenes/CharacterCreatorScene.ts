@@ -17,7 +17,7 @@ import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { showToast } from '../ui/ToastNotification';
 import { SoundManager } from '../audio/SoundManager';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 // ─── Constants ─────────────────────────────────────────
 const TOTAL_STAT_POINTS = 15;
@@ -86,12 +86,13 @@ export class CharacterCreatorScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     // Background
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, 16, this.editIndex !== null ? 'EDIT CHARACTER' : 'CREATE CHARACTER', {
+    this.add.text(GAME_WIDTH / 2, edges.top + 8, this.editIndex !== null ? 'EDIT CHARACTER' : 'CREATE CHARACTER', {
       fontSize: '20px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
@@ -555,11 +556,12 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // BOTTOM BUTTONS
   // ════════════════════════════════════════════════════
   private createBottomButtons(): void {
-    createButton(this, 60, GAME_HEIGHT - 25, '\u2190 BACK', () => transitionTo(this, this.returnTo), {
+    const edges = getViewEdges(this);
+    createButton(this, edges.left + 60, edges.bottom - 15, '\u2190 BACK', () => transitionTo(this, this.returnTo), {
       width: 80, height: 30, fontSize: '13px', strokeColor: 0x666666,
     });
 
-    createButton(this, GAME_WIDTH - 80, GAME_HEIGHT - 25, 'SAVE', () => this.saveCharacter(), {
+    createButton(this, edges.right - 80, edges.bottom - 15, 'SAVE', () => this.saveCharacter(), {
       width: 120, height: 34, fillColor: 0x00aa44, strokeColor: 0x00ff66, fontSize: '16px',
     });
   }

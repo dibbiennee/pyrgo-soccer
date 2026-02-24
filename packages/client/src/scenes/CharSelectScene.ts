@@ -10,7 +10,7 @@ import { CharacterStorage } from '../storage/CharacterStorage';
 import { CharacterApi, type PublishedCharacter } from '../api/CharacterApi';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 type SelectTab = 'mine' | 'preset' | 'community';
 
@@ -49,17 +49,18 @@ export class CharSelectScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, 16, 'SELECT YOUR FIGHTER', {
+    this.add.text(GAME_WIDTH / 2, edges.top + 8, 'SELECT YOUR FIGHTER', {
       fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Selection indicator
-    this.selectionIndicator = this.add.text(GAME_WIDTH / 2, 40, 'Player 1 \u2014 Choose!', {
+    this.selectionIndicator = this.add.text(GAME_WIDTH / 2, edges.top + 28, 'Player 1 \u2014 Choose!', {
       fontSize: '14px', fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 
@@ -97,15 +98,15 @@ export class CharSelectScene extends Phaser.Scene {
     this.updatePreview();
 
     // ── Bottom buttons ───────────────────────────
-    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 30, 'CONFIRM', () => this.confirmSelection(), {
+    createButton(this, GAME_WIDTH / 2, edges.bottom - 18, 'CONFIRM', () => this.confirmSelection(), {
       width: 160, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66,
     });
 
-    createButton(this, 55, GAME_HEIGHT - 30, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+    createButton(this, edges.left + 55, edges.bottom - 18, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
       width: 80, height: 30, fontSize: '12px', strokeColor: 0x666666,
     });
 
-    createButton(this, GAME_WIDTH - 70, GAME_HEIGHT - 30, '+ CREATE', () => {
+    createButton(this, edges.right - 70, edges.bottom - 18, '+ CREATE', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'CharSelect' });
     }, {
       width: 110, height: 30, fontSize: '12px', fillColor: 0x225588, strokeColor: 0x44aaff,
@@ -124,7 +125,8 @@ export class CharSelectScene extends Phaser.Scene {
 
     const tabW = 110;
     const startX = GAME_WIDTH / 2 - (tabs.length * (tabW + 6)) / 2 + tabW / 2;
-    const y = 60;
+    const tabEdges = getViewEdges(this);
+    const y = tabEdges.top + 42;
 
     tabs.forEach((tab, i) => {
       const x = startX + i * (tabW + 6);

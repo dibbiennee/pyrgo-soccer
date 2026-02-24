@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 declare const __APP_VERSION__: string;
 
@@ -14,6 +14,7 @@ export class CreditsScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
 
@@ -39,7 +40,7 @@ export class CreditsScene extends Phaser.Scene {
       fontSize: '12px', fontFamily: 'Arial', color: '#666677',
     }).setOrigin(0.5);
 
-    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 50, '\u2190 BACK', () => {
+    createButton(this, GAME_WIDTH / 2, edges.bottom - 20, '\u2190 BACK', () => {
       transitionTo(this, 'MainMenu');
     }, { width: 120, height: 36 });
   }

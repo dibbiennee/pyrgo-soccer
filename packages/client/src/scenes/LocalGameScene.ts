@@ -36,7 +36,7 @@ import type { InputState, CharacterDef, CharacterRef, ScoreState } from '@pyrgo/
 import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 export class LocalGameScene extends Phaser.Scene {
   // Game objects
@@ -516,8 +516,12 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   private createHUD(): void {
+    const edges = getViewEdges(this);
+    const hudTop = edges.top + 4;
+    const meterY = hudTop + 34;
+
     // Score
-    this.scoreText = this.add.text(GAME_WIDTH / 2, 16, '0 - 0', {
+    this.scoreText = this.add.text(GAME_WIDTH / 2, hudTop, '0 - 0', {
       fontSize: '32px',
       fontFamily: 'Arial Black, Arial',
       color: '#ffffff',
@@ -526,7 +530,7 @@ export class LocalGameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     // Timer
-    this.timerText = this.add.text(GAME_WIDTH / 2, 52, '1:30', {
+    this.timerText = this.add.text(GAME_WIDTH / 2, hudTop + 36, '1:30', {
       fontSize: '18px',
       fontFamily: 'Arial',
       color: '#ffffff',
@@ -537,7 +541,6 @@ export class LocalGameScene extends Phaser.Scene {
     // Super meter backgrounds
     const meterWidth = 100;
     const meterHeight = 8;
-    const meterY = 50;
 
     this.superMeter1Bg = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, meterWidth, meterHeight, 0x333333, 0.7);
     this.superMeter1Bg.setOrigin(1, 0.5);
@@ -550,12 +553,12 @@ export class LocalGameScene extends Phaser.Scene {
     this.superMeter2.setOrigin(0, 0.5);
 
     // Player names
-    this.add.text(GAME_WIDTH / 2 - 100, 16, this.player1.characterDef.name, {
+    this.add.text(GAME_WIDTH / 2 - 100, hudTop, this.player1.characterDef.name, {
       fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(1, 0);
 
-    this.add.text(GAME_WIDTH / 2 + 100, 16, this.player2.characterDef.name, {
+    this.add.text(GAME_WIDTH / 2 + 100, hudTop, this.player2.characterDef.name, {
       fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0, 0);
@@ -959,7 +962,7 @@ export class LocalGameScene extends Phaser.Scene {
       this.timerText.setColor('#ff4444');
       // Show OVERTIME indicator
       if (!this.overtimeText) {
-        this.overtimeText = this.add.text(GAME_WIDTH / 2, 72, 'OVERTIME', {
+        this.overtimeText = this.add.text(GAME_WIDTH / 2, getViewEdges(this).top + 55, 'OVERTIME', {
           fontSize: '12px', fontFamily: 'Arial Black, Arial', color: '#ff4444',
           stroke: '#000000', strokeThickness: 2,
         }).setOrigin(0.5);

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 export class HowToPlayScene extends Phaser.Scene {
   constructor() {
@@ -12,10 +12,11 @@ export class HowToPlayScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
 
-    this.add.text(GAME_WIDTH / 2, 30, 'HOW TO PLAY', {
+    this.add.text(GAME_WIDTH / 2, edges.top + 12, 'HOW TO PLAY', {
       fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
@@ -67,7 +68,7 @@ export class HowToPlayScene extends Phaser.Scene {
     this.add.text(leftX, 330, 'Score goals by kicking the ball\ninto the opponent\'s net.\nFirst to 5 goals or highest\nscore when time runs out wins!', bodyStyle).setOrigin(0.5);
 
     // Back button
-    createButton(this, GAME_WIDTH / 2, GAME_HEIGHT - 35, '\u2190 BACK', () => {
+    createButton(this, GAME_WIDTH / 2, edges.bottom - 15, '\u2190 BACK', () => {
       transitionTo(this, 'MainMenu');
     }, { width: 120, height: 36 });
   }

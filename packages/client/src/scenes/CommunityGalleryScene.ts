@@ -7,7 +7,7 @@ import { getDeviceId } from '../storage/DeviceId';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { showToast } from '../ui/ToastNotification';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 const CARDS_PER_PAGE = 6;
 
@@ -28,13 +28,14 @@ export class CommunityGalleryScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
     this.page = 0;
     this.selectedChar = null;
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, 18, 'COMMUNITY PLAYERS', {
+    this.add.text(GAME_WIDTH / 2, edges.top + 10, 'COMMUNITY PLAYERS', {
       fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
@@ -51,22 +52,23 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.detailContainer = this.add.container(0, 0);
 
     // Page navigation
-    this.pageText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 55, '', {
+    const pageY = edges.bottom - 38;
+    this.pageText = this.add.text(GAME_WIDTH / 2, pageY, '', {
       fontSize: '12px', fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5);
 
-    const prevBg = this.add.rectangle(GAME_WIDTH / 2 - 60, GAME_HEIGHT - 55, 40, 24, 0x333355);
+    const prevBg = this.add.rectangle(GAME_WIDTH / 2 - 60, pageY, 40, 24, 0x333355);
     prevBg.setInteractive({ useHandCursor: true });
-    this.add.text(GAME_WIDTH / 2 - 60, GAME_HEIGHT - 55, '<', {
+    this.add.text(GAME_WIDTH / 2 - 60, pageY, '<', {
       fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     prevBg.on('pointerdown', () => {
       if (this.page > 0) { this.page--; this.showGrid(); }
     });
 
-    const nextBg = this.add.rectangle(GAME_WIDTH / 2 + 60, GAME_HEIGHT - 55, 40, 24, 0x333355);
+    const nextBg = this.add.rectangle(GAME_WIDTH / 2 + 60, pageY, 40, 24, 0x333355);
     nextBg.setInteractive({ useHandCursor: true });
-    this.add.text(GAME_WIDTH / 2 + 60, GAME_HEIGHT - 55, '>', {
+    this.add.text(GAME_WIDTH / 2 + 60, pageY, '>', {
       fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     nextBg.on('pointerdown', () => {
@@ -75,7 +77,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
     });
 
     // Back button
-    createButton(this, 55, GAME_HEIGHT - 25, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+    createButton(this, edges.left + 55, edges.bottom - 14, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
       width: 80, height: 30, fontSize: '12px', strokeColor: 0x666666,
     });
 

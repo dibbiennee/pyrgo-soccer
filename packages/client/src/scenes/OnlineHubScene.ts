@@ -6,7 +6,7 @@ import { SocketManager } from '../network/SocketManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 export class OnlineHubScene extends Phaser.Scene {
   private socket!: SocketManager;
@@ -34,13 +34,14 @@ export class OnlineHubScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     const sm = SoundManager.getInstance();
     sm.enabled = this.game.registry.get('soundOn') !== false;
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e);
 
-    this.add.text(GAME_WIDTH / 2, 24, 'ONLINE MATCH', {
+    this.add.text(GAME_WIDTH / 2, edges.top + 10, 'ONLINE MATCH', {
       fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
@@ -142,7 +143,7 @@ export class OnlineHubScene extends Phaser.Scene {
     divider.lineBetween(GAME_WIDTH / 2, 145, GAME_WIDTH / 2, 390);
 
     // Back button
-    createButton(this, 60, GAME_HEIGHT - 30, '\u2190 BACK', () => {
+    createButton(this, edges.left + 60, edges.bottom - 15, '\u2190 BACK', () => {
       this.cleanup();
       transitionTo(this, 'CharSelect', { mode: 'online' });
     }, { width: 80, height: 30, fontSize: '12px', strokeColor: 0x666666 });

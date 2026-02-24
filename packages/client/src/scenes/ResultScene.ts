@@ -6,7 +6,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { SocketManager } from '../network/SocketManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 interface MatchStats {
   shotsP1: number;
@@ -61,6 +61,7 @@ export class ResultScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     const sm = SoundManager.getInstance();
     const char1 = resolveCharacter(this.charRef1);
@@ -72,7 +73,7 @@ export class ResultScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0a0a1a);
 
     // ── "TEMPO SCADUTO" animated ────────────────────
-    const tempoText = this.add.text(GAME_WIDTH / 2, 30, 'TEMPO SCADUTO', {
+    const tempoText = this.add.text(GAME_WIDTH / 2, edges.top + 10, 'TEMPO SCADUTO', {
       fontSize: '20px', fontFamily: 'Arial Black, Arial', color: '#aaaacc',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5).setScale(0);

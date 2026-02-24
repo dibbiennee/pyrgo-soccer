@@ -32,7 +32,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 interface ServerSnapshot {
   time: number;
@@ -309,17 +309,20 @@ export class OnlineGameScene extends Phaser.Scene {
   // HUD
   // ═══════════════════════════════════════════════════
   private createHUD(): void {
-    this.scoreText = this.add.text(GAME_WIDTH / 2, 16, '0 - 0', {
+    const edges = getViewEdges(this);
+    const hudTop = edges.top + 4;
+    const meterY = hudTop + 34;
+
+    this.scoreText = this.add.text(GAME_WIDTH / 2, hudTop, '0 - 0', {
       fontSize: '32px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5, 0).setDepth(10);
 
-    this.timerText = this.add.text(GAME_WIDTH / 2, 52, '1:30', {
+    this.timerText = this.add.text(GAME_WIDTH / 2, hudTop + 36, '1:30', {
       fontSize: '18px', fontFamily: 'Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5, 0).setDepth(10);
 
-    const meterY = 50;
     this.superMeter1Bg = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, 100, 8, 0x333333, 0.7).setOrigin(1, 0.5).setDepth(10);
     this.superMeter1 = this.add.rectangle(GAME_WIDTH / 2 - 100, meterY, 0, 8, 0xffaa00).setOrigin(1, 0.5).setDepth(10);
     this.superMeter2Bg = this.add.rectangle(GAME_WIDTH / 2 + 100, meterY, 100, 8, 0x333333, 0.7).setOrigin(0, 0.5).setDepth(10);
@@ -331,19 +334,19 @@ export class OnlineGameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(100);
 
     // Ping indicator (top right)
-    this.pingIndicator = this.add.text(GAME_WIDTH - 10, 8, '', {
+    this.pingIndicator = this.add.text(edges.right - 10, hudTop, '', {
       fontSize: '10px', fontFamily: 'Courier New, monospace', color: '#00ff66',
     }).setOrigin(1, 0).setDepth(10);
 
     // Opponent name
     const opponentChar = this.myPlayerIndex === 1 ? this.char2 : this.char1;
     const opX = this.myPlayerIndex === 1 ? GAME_WIDTH - 80 : 80;
-    this.opponentNameText = this.add.text(opX, 70, opponentChar.name, {
+    this.opponentNameText = this.add.text(opX, hudTop + 55, opponentChar.name, {
       fontSize: '10px', fontFamily: 'Arial', color: '#aaaacc',
     }).setOrigin(0.5).setDepth(10);
 
     // Exit button
-    createButton(this, 40, 18, 'EXIT', () => {
+    createButton(this, edges.left + 40, hudTop + 10, 'EXIT', () => {
       this.showExitConfirmation();
     }, { width: 60, height: 24, fontSize: '10px', fillColor: 0x994444, strokeColor: 0xff4444, depth: 10 });
   }
@@ -415,7 +418,7 @@ export class OnlineGameScene extends Phaser.Scene {
 
       // Overtime display
       if (data.overtime && !this.overtimeText) {
-        this.overtimeText = this.add.text(GAME_WIDTH / 2, 75, 'OVERTIME', {
+        this.overtimeText = this.add.text(GAME_WIDTH / 2, getViewEdges(this).top + 55, 'OVERTIME', {
           fontSize: '14px', fontFamily: 'Arial Black, Arial', color: '#ffdd00',
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(10);

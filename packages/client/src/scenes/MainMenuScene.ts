@@ -3,7 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { setupResponsiveCamera } from '../utils/responsive';
+import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 declare const __APP_VERSION__: string;
 
@@ -18,6 +18,7 @@ export class MainMenuScene extends Phaser.Scene {
   create(): void {
     setupResponsiveCamera(this);
     fadeIn(this);
+    const edges = getViewEdges(this);
 
     // ── Background ──────────────────────────────────
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
@@ -139,7 +140,7 @@ export class MainMenuScene extends Phaser.Scene {
     }, { width: 220, height: 44 });
 
     // ── Gear icon (Settings) — top right ────────────
-    const gearText = this.add.text(GAME_WIDTH - 30, 20, '\u2699', {
+    const gearText = this.add.text(edges.right - 15, edges.top + 15, '\u2699', {
       fontSize: '28px', fontFamily: 'Arial', color: '#666688',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -152,7 +153,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ── Version/Credits ─────────────────────────────
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 12, `v${version}  |  PYRGO GAMES`, {
+    this.add.text(GAME_WIDTH / 2, edges.bottom - 8, `v${version}  |  PYRGO GAMES`, {
       fontSize: '10px',
       fontFamily: 'Arial',
       color: '#444466',
