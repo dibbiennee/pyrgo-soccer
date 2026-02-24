@@ -5,7 +5,6 @@ import {
   GRAVITY,
   BALL_MAX_SPEED,
   BALL_BOUNCE_GROUND,
-  BALL_BOUNCE_WALL,
   BALL_DRAG,
   BALL_RADIUS,
   PLAYER_BASE_SPEED,
@@ -53,6 +52,7 @@ export interface PhysicsPlayer {
   flameDashActive: boolean;
   thunderKickReady: boolean;
   ghostPhaseActive: boolean;
+  ghostKickDelay: number; // ms remaining before ghost teleport kick
   ironWallActive: boolean;
   poisonShotActive: boolean;
   iceFieldActive: boolean;
@@ -89,6 +89,7 @@ export class ServerPhysics {
       flameDashActive: false,
       thunderKickReady: false,
       ghostPhaseActive: false,
+      ghostKickDelay: 0,
       ironWallActive: false,
       poisonShotActive: false,
       iceFieldActive: false,
@@ -118,13 +119,19 @@ export class ServerPhysics {
       }
     }
 
+    // Iron wall-ball collisions
+    for (const player of state.players) {
+      this.checkIronWallCollision(state.ball, player);
+    }
+
     // Check goals
     state.goalScored = this.checkGoal(state.ball);
   }
 
   private static processPlayerInput(player: PhysicsPlayer, input: InputState, state: PhysicsState, dtSec: number, dtMs: number): void {
     const s = player.state;
-    const speed = player.flameDashActive ? player.moveSpeed * 2 : player.moveSpeed;
+    // Fix #1: Flame Dash speed 2x → 1.5x (aligns with Player.ts)
+    const speed = player.flameDashActive ? player.moveSpeed * 1.5 : player.moveSpeed;
 
     // Ice field effect
     const opponent = state.players[s.id === 1 ? 1 : 0];
@@ -139,7 +146,8 @@ export class ServerPhysics {
       s.facingRight = true;
     } else {
       if (iced) {
-        s.vx *= 0.98; // Slide on ice
+        // Fix #8: Ice slide 0.98 → 0.99 (closer to Phaser dragX=10 at 60fps)
+        s.vx *= 0.99;
       } else {
         s.vx = 0;
       }
@@ -174,15 +182,24 @@ export class ServerPhysics {
     if (player.superTimer > 0) {
       player.superTimer -= dtMs;
       if (player.superTimer <= 0) {
-        // Ghost phase teleport kick on expiry
+        // Fix #7: Ghost phase — start 500ms delay instead of immediate kick
         if (player.ghostPhaseActive) {
-          this.ghostTeleportKick(player, state.ball);
+          player.ghostKickDelay = 500;
         }
         player.flameDashActive = false;
         player.ghostPhaseActive = false;
         player.ironWallActive = false;
         player.iceFieldActive = false;
         s.superActive = false;
+      }
+    }
+
+    // Fix #7: Ghost kick delay countdown
+    if (player.ghostKickDelay > 0) {
+      player.ghostKickDelay -= dtMs;
+      if (player.ghostKickDelay <= 0) {
+        player.ghostKickDelay = 0;
+        this.ghostTeleportKick(player, state.ball);
       }
     }
 
@@ -273,13 +290,13 @@ export class ServerPhysics {
 
     if (dx * dx + dy * dy < BALL_RADIUS * BALL_RADIUS) {
       let force = player.kickForce;
-      if (player.flameDashActive) force *= 2;
+      // Fix #2: Flame Dash kick force 2x → 1.5x (aligns with Player.ts)
+      if (player.flameDashActive) force *= 1.5;
       if (player.thunderKickReady) {
         force *= 3;
         ball.gravityIgnored = true;
         player.thunderKickReady = false;
         s.superActive = false;
-        // Will be reset after 500ms in game room tick
       }
 
       if (player.poisonShotActive) {
@@ -324,20 +341,20 @@ export class ServerPhysics {
       ball.vy *= -BALL_BOUNCE_GROUND;
     }
 
-    // Ceiling
+    // Fix #4: Ceiling bounce — use BALL_BOUNCE_GROUND (0.7) like Phaser symmetric bounce
     if (ball.y - BALL_RADIUS < 0) {
       ball.y = BALL_RADIUS;
-      ball.vy = Math.abs(ball.vy) * BALL_BOUNCE_WALL;
+      ball.vy = Math.abs(ball.vy) * BALL_BOUNCE_GROUND;
     }
 
-    // Wall bounce
+    // Fix #4: Wall bounce — use BALL_BOUNCE_GROUND (0.7) like Phaser symmetric bounce
     if (ball.x - BALL_RADIUS < 0) {
       ball.x = BALL_RADIUS;
-      ball.vx = Math.abs(ball.vx) * BALL_BOUNCE_WALL;
+      ball.vx = Math.abs(ball.vx) * BALL_BOUNCE_GROUND;
     }
     if (ball.x + BALL_RADIUS > GAME_WIDTH) {
       ball.x = GAME_WIDTH - BALL_RADIUS;
-      ball.vx = -Math.abs(ball.vx) * BALL_BOUNCE_WALL;
+      ball.vx = -Math.abs(ball.vx) * BALL_BOUNCE_GROUND;
     }
 
     // Speed clamp
@@ -396,12 +413,10 @@ export class ServerPhysics {
       ball.x = closestX + nx * BALL_RADIUS;
       ball.y = closestY + ny * BALL_RADIUS;
 
-      // Reflect velocity
+      // Fix #5: Reflect velocity — removed 0.6 dampen (Phaser reflects without extra dampen)
       const dot = ball.vx * nx + ball.vy * ny;
       ball.vx -= 2 * dot * nx;
       ball.vy -= 2 * dot * ny;
-      ball.vx *= 0.6;
-      ball.vy *= 0.6;
 
       // DEF stat reduces ball speed on body contact
       const reduction = 1 - player.charDef.stats.defense * DEF_BALL_SPEED_REDUCTION_PER_POINT;
@@ -410,6 +425,42 @@ export class ServerPhysics {
     }
   }
 
+  // Fix #9: Iron Wall collision — ball bounces off the wall rectangle
+  private static checkIronWallCollision(ball: BallState, player: PhysicsPlayer): void {
+    if (!player.ironWallActive) return;
+
+    // Wall position matches local: Player.ts ironWall activation
+    const wallX = player.state.id === 1 ? 60 : 740;
+    const wallCenterY = GROUND_Y - 60;
+    const wallW = 12;
+    const wallH = 120;
+
+    const left = wallX - wallW / 2;
+    const right = wallX + wallW / 2;
+    const top = wallCenterY - wallH / 2;
+    const bottom = wallCenterY + wallH / 2;
+
+    // AABB-circle collision
+    const closestX = Math.max(left, Math.min(ball.x, right));
+    const closestY = Math.max(top, Math.min(ball.y, bottom));
+    const dx = ball.x - closestX;
+    const dy = ball.y - closestY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < BALL_RADIUS && dist > 0) {
+      const nx = dx / dist;
+      const ny = dy / dist;
+      // Separate
+      ball.x = closestX + nx * BALL_RADIUS;
+      ball.y = closestY + ny * BALL_RADIUS;
+      // Reflect
+      const dot = ball.vx * nx + ball.vy * ny;
+      ball.vx -= 2 * dot * nx;
+      ball.vy -= 2 * dot * ny;
+    }
+  }
+
+  // Fix #6: Ghost teleport kick force 1.5x → 1.2x (aligns with LocalGameScene)
   private static ghostTeleportKick(player: PhysicsPlayer, ball: BallState): void {
     const s = player.state;
     const offsetX = s.facingRight ? -30 : 30;
@@ -419,7 +470,7 @@ export class ServerPhysics {
     s.vy = 0;
 
     const dirX = s.facingRight ? 1 : -1;
-    const force = player.kickForce * 1.5;
+    const force = player.kickForce * 1.2;
     ball.vx = dirX * force;
     ball.vy = -0.3 * force;
 
@@ -456,5 +507,6 @@ export class ServerPhysics {
     player.state.vy = 0;
     player.state.jumpsRemaining = MAX_JUMPS;
     player.state.isKicking = false;
+    player.ghostKickDelay = 0;
   }
 }

@@ -53,7 +53,7 @@ export const BALL_START_Y = GAME_HEIGHT / 3;
 export const DEF_BALL_SPEED_REDUCTION_PER_POINT = 0.04;
 
 // Header (head bounce)
-export const HEADER_FORCE_X = 200;
+export const HEADER_FORCE_X = 250;
 export const HEADER_FORCE_Y = -300;
 
 // Match rules
