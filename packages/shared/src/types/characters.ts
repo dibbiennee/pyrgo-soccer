@@ -30,7 +30,7 @@ export const SUPER_MOVES: SuperMoveInfo[] = [
   { id: 'ironWall', displayName: 'Shield Blast', description: '3s energy wall blocks everything', color: 0x00ccff },
   { id: 'poisonShot', displayName: 'Tornado', description: 'Ball turns green, next goal counts double', color: 0x88ff00 },
   { id: 'iceField', displayName: 'Meteor', description: '3s icy field, opponent slides', color: 0x88ddff },
-  { id: 'fireCapriole', displayName: 'A Mi', description: 'Fire capriole — 2x kick toward goal, fire trail', color: 0xff4400 },
+  { id: 'fireCapriole', displayName: 'A Mi', description: 'Fire capriole — 3x kick toward goal, fire trail', color: 0xff4400 },
 ];
 
 export interface CharacterDef {
@@ -73,7 +73,7 @@ export const CHARACTERS: CharacterDef[] = [
     name: 'ER MANCINO',
     stats: { speed: 6, power: 6, defense: 5 },
     superMove: 'fireCapriole',
-    superDescription: 'A MI — fire capriole, 2x kick toward goal, fire trail 2s',
+    superDescription: 'A MI — fire capriole, 3x kick toward goal, fire trail',
     color: 0x1a5276,
     headColor: 0xd4a574,
     accentColor: 0xff4400,

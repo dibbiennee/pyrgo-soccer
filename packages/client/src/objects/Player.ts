@@ -183,7 +183,7 @@ export class Player extends Phaser.GameObjects.Container {
   getEffectiveKickForce(): number {
     let force = this.kickForce;
     if (this.flameDashActive) force *= 1.5;
-    if (this.fireCaprioleActive) force *= 2;
+    if (this.fireCaprioleActive) force *= 3;
     if (this.thunderKickReady) force *= 3;
     return force;
   }
@@ -267,19 +267,8 @@ export class Player extends Phaser.GameObjects.Container {
 
       case 'fireCapriole':
         this.fireCaprioleActive = true;
-        this.emitSuperParticles(0xff4400);
-        MusicManager.getInstance().playEffect('/sfx/super_ami.mp3');
-        // 360° rotation tween over 1.5s
-        this.scene.tweens.add({
-          targets: this,
-          angle: 360,
-          duration: 1500,
-          onComplete: () => {
-            this.setAngle(0);
-            this.fireCaprioleActive = false;
-            this.superActive = false;
-          },
-        });
+        // Scene handles the full sequence (freeze → jump → attract → kick)
+        this.emit('fireCaprioleStart');
         break;
     }
   }

@@ -199,24 +199,27 @@ export class OnlineGameScene extends Phaser.Scene {
     lightGfx.fillStyle(0xffffcc, 0.03);
     lightGfx.fillTriangle(GAME_WIDTH - 38, GROUND_Y - 140, GAME_WIDTH + 50, GROUND_Y, GAME_WIDTH - 200, GROUND_Y);
 
-    // Striped grass
+    // Striped grass (3 tones)
     const grassGfx = this.add.graphics();
     const stripeWidth = 60;
+    const grassTones = [0x1a6b33, 0x155a2a, 0x186330];
     for (let sx = 0; sx < GAME_WIDTH; sx += stripeWidth) {
-      const isLight = (sx / stripeWidth) % 2 === 0;
-      grassGfx.fillStyle(isLight ? 0x1a6b33 : 0x155a2a, 1);
+      const toneIdx = Math.floor(sx / stripeWidth) % 3;
+      grassGfx.fillStyle(grassTones[toneIdx], 1);
       grassGfx.fillRect(sx, GROUND_Y, stripeWidth, 40);
     }
 
-    // Field markings
+    // Field markings (more visible)
     const markings = this.add.graphics();
-    markings.lineStyle(2, 0xffffff, 0.25);
+    markings.lineStyle(2, 0xffffff, 0.4);
     markings.lineBetween(GAME_WIDTH / 2, GROUND_Y - 200, GAME_WIDTH / 2, GROUND_Y);
     markings.strokeCircle(GAME_WIDTH / 2, GROUND_Y - 60, 50);
-    markings.fillStyle(0xffffff, 0.25);
+    markings.fillStyle(0xffffff, 0.4);
     markings.fillCircle(GAME_WIDTH / 2, GROUND_Y - 60, 3);
     markings.strokeRect(GOAL_LEFT_X, GROUND_Y - 100, 80, 100);
     markings.strokeRect(GAME_WIDTH - 80, GROUND_Y - 100, 80, 100);
+    markings.fillCircle(GOAL_LEFT_X + 65, GROUND_Y - 50, 2);
+    markings.fillCircle(GAME_WIDTH - 65, GROUND_Y - 50, 2);
   }
 
   private createGoals(): void {
@@ -456,12 +459,23 @@ export class OnlineGameScene extends Phaser.Scene {
     this.socket.on('GOAL_SCORED', (data: { scoringPlayer: number; newScore: ScoreState; points: number }) => {
       this.score = data.newScore;
       this.sound_mgr.goal();
-      this.cameras.main.shake(300, 8 / 1000);
 
-      // Goal text
+      // Strong shake (5px / 300ms)
+      this.cameras.main.shake(300, 5 / 1000);
+
+      // White flash 50ms
+      const whiteFlash = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0.7)
+        .setDepth(149);
+      this.tweens.add({ targets: whiteFlash, alpha: 0, duration: 50, onComplete: () => whiteFlash.destroy() });
+
+      // Team-colored text
+      const scorer = data.scoringPlayer === 1 ? this.char1 : this.char2;
+      const scorerColor = scorer.color;
+      const rgb = Phaser.Display.Color.IntegerToRGB(scorerColor);
       const goalLabel = data.points > 1 ? 'GOOOL! x2' : 'GOOOL!';
       const goalText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, goalLabel, {
-        fontSize: '52px', fontFamily: 'Arial Black, Arial', color: '#ffdd00',
+        fontSize: '52px', fontFamily: 'Arial Black, Arial',
+        color: `rgb(${rgb.r},${rgb.g},${rgb.b})`,
         stroke: '#000000', strokeThickness: 8,
       }).setOrigin(0.5).setDepth(100);
 
@@ -473,19 +487,35 @@ export class OnlineGameScene extends Phaser.Scene {
         onComplete: () => goalText.destroy(),
       });
 
-      // Score bounce
+      // Score bounce with team color flash
       this.tweens.add({
         targets: this.scoreText,
         scale: { from: 1.3, to: 1 },
         duration: 300,
         ease: 'Back.easeOut',
       });
+      const hexColor = `#${scorerColor.toString(16).padStart(6, '0')}`;
+      this.scoreText.setColor(hexColor);
+      this.time.delayedCall(600, () => this.scoreText.setColor('#ffffff'));
+
+      // Team-colored particle explosion at goal
+      const goalX = data.scoringPlayer === 1 ? GOAL_RIGHT_X : GOAL_LEFT_X + GOAL_WIDTH;
+      const goalCY = GOAL_Y + GOAL_HEIGHT / 2;
+      for (let i = 0; i < 15; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 60;
+        const gp = this.add.arc(goalX, goalCY, 3, 0, 360, false, scorerColor, 0.9).setDepth(99);
+        this.tweens.add({
+          targets: gp, x: goalX + Math.cos(angle) * speed, y: goalCY + Math.sin(angle) * speed,
+          alpha: 0, scale: 0, duration: 400, onComplete: () => gp.destroy(),
+        });
+      }
 
       // Confetti
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 25; i++) {
         const cx = GAME_WIDTH / 2 + (Math.random() - 0.5) * 200;
         const p = this.add.arc(cx, GAME_HEIGHT / 2, 2 + Math.random() * 3, 0, 360, false,
-          [0xffdd00, 0xff4400, 0x00ccff, 0xffffff][Math.floor(Math.random() * 4)]).setDepth(99);
+          [0xffdd00, 0xff4400, 0x00ccff, 0xffffff, scorerColor][Math.floor(Math.random() * 5)]).setDepth(99);
         this.tweens.add({
           targets: p,
           y: GAME_HEIGHT + 20,
@@ -499,6 +529,8 @@ export class OnlineGameScene extends Phaser.Scene {
 
     this.socket.on('SUPER_ACTIVATED', (data: { playerIndex: number; superMoveId: string }) => {
       this.sound_mgr.super();
+      MusicManager.getInstance().duckForSuper();
+
       const superInfo = SUPER_MOVES.find(m => m.id === data.superMoveId);
       const superName = superInfo?.displayName ?? data.superMoveId;
       const color = superInfo ? `#${superInfo.color.toString(16).padStart(6, '0')}` : '#ffaa00';
@@ -526,6 +558,70 @@ export class OnlineGameScene extends Phaser.Scene {
         duration: 300,
         onComplete: () => flash.destroy(),
       });
+
+      // fireCapriole special effects: rotation, camera zoom, fire particles, SFX
+      if (data.superMoveId === 'fireCapriole') {
+        const container = data.playerIndex === 1 ? this.player1Container : this.player2Container;
+        MusicManager.getInstance().playEffect('/sfx/super_ami.mp3');
+
+        // Camera zoom 1.1x
+        this.cameras.main.zoomTo(1.1, 300);
+
+        // 360° rotation on container
+        this.tweens.add({
+          targets: container,
+          angle: 360,
+          duration: 1500,
+          ease: 'Linear',
+          onComplete: () => container.setAngle(0),
+        });
+
+        // Fire particles
+        const particleInterval = setInterval(() => {
+          for (let i = 0; i < 3; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const fp = this.add.arc(container.x, container.y, 3, 0, 360, false, 0xff4400, 0.8).setDepth(10);
+            this.tweens.add({
+              targets: fp,
+              x: container.x + Math.cos(angle) * 35,
+              y: container.y + Math.sin(angle) * 35,
+              alpha: 0,
+              duration: 200,
+              onComplete: () => fp.destroy(),
+            });
+          }
+        }, 100);
+
+        // End effects after 1800ms
+        setTimeout(() => {
+          clearInterval(particleInterval);
+          this.cameras.main.zoomTo(1, 500);
+
+          // Fire impact particles
+          for (let i = 0; i < 15; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const s = 30 + Math.random() * 60;
+            const ip = this.add.arc(this.ballContainer.x, this.ballContainer.y, 3, 0, 360, false,
+              Math.random() < 0.5 ? 0xff4400 : 0xffaa00, 0.9).setDepth(10);
+            this.tweens.add({
+              targets: ip,
+              x: this.ballContainer.x + Math.cos(a) * s,
+              y: this.ballContainer.y + Math.sin(a) * s,
+              alpha: 0,
+              scale: 0,
+              duration: 400,
+              onComplete: () => ip.destroy(),
+            });
+          }
+          MusicManager.getInstance().unduckAfterSuper();
+        }, 1800);
+      } else {
+        // Non-fireCapriole supers: unduck after estimated duration
+        const dur = data.superMoveId === 'flameDash' ? 2000 :
+                    data.superMoveId === 'ghostPhase' ? 2500 :
+                    data.superMoveId === 'ironWall' || data.superMoveId === 'iceField' ? 3000 : 1500;
+        setTimeout(() => MusicManager.getInstance().unduckAfterSuper(), dur);
+      }
     });
 
     this.socket.on('DISCONNECT_WARNING', (data: { disconnectedPlayer: number; timeoutMs: number }) => {
@@ -662,6 +758,8 @@ export class OnlineGameScene extends Phaser.Scene {
     }
   }
 
+  private lastBallVx = 0;
+
   private interpolateBall(): void {
     if (this.snapshotBuffer.length < 2) {
       if (this.snapshotBuffer.length > 0) {
@@ -693,6 +791,11 @@ export class OnlineGameScene extends Phaser.Scene {
       const y = before.ball.y + (after.ball.y - before.ball.y) * clampedT;
 
       this.ballContainer.setPosition(x, y);
+
+      // Visual rotation based on estimated vx
+      const vx = range > 0 ? (after.ball.x - before.ball.x) / (range / 1000) : 0;
+      this.ballContainer.angle += vx * 0.01;
+      this.lastBallVx = vx;
     } else {
       const latest = this.snapshotBuffer[this.snapshotBuffer.length - 1];
       this.ballContainer.setPosition(latest.ball.x, latest.ball.y);
@@ -709,11 +812,16 @@ export class OnlineGameScene extends Phaser.Scene {
     const secs = Math.max(0, this.timeRemaining) % 60;
     this.timerText.setText(`${mins}:${secs.toString().padStart(2, '0')}`);
 
-    // Timer pulse red in last 10s
+    // Timer: orange <30s, red+pulse <10s
     if (this.timeRemaining <= 10 && this.timeRemaining > 0) {
       this.timerText.setColor('#ff4444');
+      this.timerText.setScale(1 + Math.sin(Date.now() / 200) * 0.1);
+    } else if (this.timeRemaining <= 30 && this.timeRemaining > 10) {
+      this.timerText.setColor('#ff8800');
+      this.timerText.setScale(1);
     } else {
       this.timerText.setColor('#ffffff');
+      this.timerText.setScale(1);
     }
 
     // Super meters from server (rounded rect redraw)

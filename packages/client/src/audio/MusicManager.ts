@@ -23,6 +23,7 @@ export class MusicManager {
   private started = false;
   private gameplayMode = false;
   private enabled = true;
+  private duckInterval: ReturnType<typeof setInterval> | null = null;
 
   static getInstance(): MusicManager {
     if (!MusicManager.instance) {
@@ -105,8 +106,50 @@ export class MusicManager {
     this.playCurrent();
   };
 
+  /** Duck music to 10% volume in ~200ms for super move activation. */
+  duckForSuper(): void {
+    if (!this.audio || !this.enabled) return;
+    this.clearDuckInterval();
+    const target = BASE_VOLUME * 0.1;
+    const current = this.audio.volume;
+    const steps = 12; // ~200ms at 60fps
+    const decrement = (current - target) / steps;
+    let count = 0;
+    this.duckInterval = setInterval(() => {
+      count++;
+      if (!this.audio) { this.clearDuckInterval(); return; }
+      this.audio.volume = Math.max(target, current - decrement * count);
+      if (count >= steps) this.clearDuckInterval();
+    }, 16);
+  }
+
+  /** Restore music volume in ~500ms after super move ends. */
+  unduckAfterSuper(): void {
+    if (!this.audio || !this.enabled) return;
+    this.clearDuckInterval();
+    const target = this.gameplayMode ? BASE_VOLUME * GAMEPLAY_VOLUME_RATIO : BASE_VOLUME;
+    const current = this.audio.volume;
+    const steps = 30; // ~500ms at 60fps
+    const increment = (target - current) / steps;
+    let count = 0;
+    this.duckInterval = setInterval(() => {
+      count++;
+      if (!this.audio) { this.clearDuckInterval(); return; }
+      this.audio.volume = Math.min(target, current + increment * count);
+      if (count >= steps) this.clearDuckInterval();
+    }, 16);
+  }
+
+  private clearDuckInterval(): void {
+    if (this.duckInterval) {
+      clearInterval(this.duckInterval);
+      this.duckInterval = null;
+    }
+  }
+
   private updateVolume(): void {
     if (!this.audio) return;
+    this.clearDuckInterval();
     this.audio.volume = this.gameplayMode
       ? BASE_VOLUME * GAMEPLAY_VOLUME_RATIO
       : BASE_VOLUME;

@@ -18,6 +18,9 @@ export class Ball extends Phaser.GameObjects.Container {
   private circle: Phaser.GameObjects.Arc;
   private trail: Phaser.GameObjects.Arc[] = [];
   private trailTimer = 0;
+  private afterimages: Phaser.GameObjects.Arc[] = [];
+  private afterimageTimer = 0;
+  private wasOnGround = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -61,11 +64,23 @@ export class Ball extends Phaser.GameObjects.Container {
       this.body.setVelocity(vx * scale, vy * scale);
     }
 
+    // Visual rotation based on horizontal velocity
+    this.angle += vx * 0.01 * (delta / 16.67);
+
     // Ball trail
     this.trailTimer += delta;
     if (this.trailTimer > 30 && speed > 200) {
       this.trailTimer = 0;
       this.addTrailDot();
+    }
+
+    // Speed afterimages (motion blur) when speed > 500
+    if (speed > 500) {
+      this.afterimageTimer += delta;
+      if (this.afterimageTimer > 50) {
+        this.afterimageTimer = 0;
+        this.addAfterimage();
+      }
     }
 
     // Fade trail
@@ -77,6 +92,23 @@ export class Ball extends Phaser.GameObjects.Container {
         this.trail.splice(i, 1);
       }
     }
+
+    // Fade afterimages
+    for (let i = this.afterimages.length - 1; i >= 0; i--) {
+      const img = this.afterimages[i];
+      img.alpha -= 0.1;
+      if (img.alpha <= 0) {
+        img.destroy();
+        this.afterimages.splice(i, 1);
+      }
+    }
+
+    // Bounce dust on ground contact
+    const onGround = this.body.blocked.down;
+    if (onGround && !this.wasOnGround && Math.abs(vy) > 100) {
+      this.emitBounceDust();
+    }
+    this.wasOnGround = onGround;
 
     // Poison visual
     if (this.poisoned) {
@@ -95,6 +127,35 @@ export class Ball extends Phaser.GameObjects.Container {
     if (this.trail.length > 8) {
       const old = this.trail.shift();
       old?.destroy();
+    }
+  }
+
+  private addAfterimage(): void {
+    const color = this.superTrailColor ?? (this.poisoned ? 0x44ff00 : 0xffffff);
+    const img = this.scene.add.arc(this.x, this.y, BALL_RADIUS, 0, 360, false, color, 0.25);
+    img.setDepth(-1);
+    this.afterimages.push(img);
+    if (this.afterimages.length > 3) {
+      const old = this.afterimages.shift();
+      old?.destroy();
+    }
+  }
+
+  private emitBounceDust(): void {
+    for (let i = 0; i < 4; i++) {
+      const dx = (Math.random() - 0.5) * 20;
+      const dust = this.scene.add.arc(
+        this.x + dx, this.y + BALL_RADIUS, 2, 0, 360, false, 0x8b7355, 0.5,
+      );
+      this.scene.tweens.add({
+        targets: dust,
+        y: this.y + BALL_RADIUS - 10 - Math.random() * 10,
+        x: this.x + dx + (Math.random() - 0.5) * 15,
+        alpha: 0,
+        scale: 0.3,
+        duration: 300 + Math.random() * 200,
+        onComplete: () => dust.destroy(),
+      });
     }
   }
 
@@ -118,6 +179,8 @@ export class Ball extends Phaser.GameObjects.Container {
   clearTrail(): void {
     this.trail.forEach(d => d.destroy());
     this.trail = [];
+    this.afterimages.forEach(d => d.destroy());
+    this.afterimages = [];
   }
 
   destroy(fromScene?: boolean): void {

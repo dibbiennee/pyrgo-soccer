@@ -108,6 +108,19 @@ export class LocalGameScene extends Phaser.Scene {
   // Sound
   private sound_mgr = SoundManager.getInstance();
 
+  // fireCapriole sequence state
+  private fcState: 'none' | 'freeze' | 'capriole' = 'none';
+  private fcPlayer: Player | null = null;
+  private fcStartMs = 0;
+  private fcParticleTimer = 0;
+
+  // Landing detection
+  private p1WasInAir = false;
+  private p2WasInAir = false;
+
+  // Goal slow-mo
+  private goalSlowMoActive = false;
+
   constructor(key = 'LocalGame') {
     super(key);
   }
@@ -134,6 +147,13 @@ export class LocalGameScene extends Phaser.Scene {
     this.supersUsedP1 = 0;
     this.supersUsedP2 = 0;
     this.lastScore = { player1: 0, player2: 0 };
+    this.fcState = 'none';
+    this.fcPlayer = null;
+    this.fcStartMs = 0;
+    this.fcParticleTimer = 0;
+    this.p1WasInAir = false;
+    this.p2WasInAir = false;
+    this.goalSlowMoActive = false;
   }
 
   create(): void {
@@ -220,12 +240,13 @@ export class LocalGameScene extends Phaser.Scene {
     lightGfx.fillStyle(0xffffcc, 0.03);
     lightGfx.fillTriangle(GAME_WIDTH - 38, GROUND_Y - 140, GAME_WIDTH + 50, GROUND_Y, GAME_WIDTH - 200, GROUND_Y);
 
-    // Striped grass
+    // Striped grass (3 tones)
     const grassGfx = this.add.graphics();
     const stripeWidth = 60;
+    const grassTones = [0x1a6b33, 0x155a2a, 0x186330];
     for (let sx = 0; sx < GAME_WIDTH; sx += stripeWidth) {
-      const isLight = (sx / stripeWidth) % 2 === 0;
-      grassGfx.fillStyle(isLight ? 0x1a6b33 : 0x155a2a, 1);
+      const toneIdx = Math.floor(sx / stripeWidth) % 3;
+      grassGfx.fillStyle(grassTones[toneIdx], 1);
       grassGfx.fillRect(sx, GROUND_Y, stripeWidth, 40);
     }
 
@@ -246,20 +267,23 @@ export class LocalGameScene extends Phaser.Scene {
     const rightWall = this.add.rectangle(GAME_WIDTH + WALL_THICKNESS / 2, GAME_HEIGHT / 2, WALL_THICKNESS, GAME_HEIGHT, 0x000000, 0);
     this.physics.add.existing(rightWall, true);
 
-    // Field markings
+    // Field markings (more visible)
     const markings = this.add.graphics();
-    markings.lineStyle(2, 0xffffff, 0.25);
+    markings.lineStyle(2, 0xffffff, 0.4);
     // Center line
     markings.lineBetween(GAME_WIDTH / 2, GROUND_Y - 200, GAME_WIDTH / 2, GROUND_Y);
     // Center circle
     markings.strokeCircle(GAME_WIDTH / 2, GROUND_Y - 60, 50);
     // Center dot
-    markings.fillStyle(0xffffff, 0.25);
+    markings.fillStyle(0xffffff, 0.4);
     markings.fillCircle(GAME_WIDTH / 2, GROUND_Y - 60, 3);
     // Left penalty area
     markings.strokeRect(GOAL_LEFT_X, GROUND_Y - 100, 80, 100);
     // Right penalty area
     markings.strokeRect(GAME_WIDTH - 80, GROUND_Y - 100, 80, 100);
+    // Penalty spots
+    markings.fillCircle(GOAL_LEFT_X + 65, GROUND_Y - 50, 2);
+    markings.fillCircle(GAME_WIDTH - 65, GROUND_Y - 50, 2);
   }
 
   private createGoals(): void {
@@ -357,16 +381,49 @@ export class LocalGameScene extends Phaser.Scene {
     this.player1.on('ghostPhaseEnd', () => this.ghostTeleportKick(this.player1));
     this.player2.on('ghostPhaseEnd', () => this.ghostTeleportKick(this.player2));
 
-    // Super activation sound + FX
+    // Super activation sound + FX + audio ducking
     this.player1.on('superActivated', () => {
       this.sound_mgr.super();
       this.supersUsedP1++;
       this.showSuperActivationFX(this.player1);
+      MusicManager.getInstance().duckForSuper();
     });
     this.player2.on('superActivated', () => {
       this.sound_mgr.super();
       this.supersUsedP2++;
       this.showSuperActivationFX(this.player2);
+      MusicManager.getInstance().duckForSuper();
+    });
+
+    // fireCapriole full sequence handler
+    this.player1.on('fireCaprioleStart', () => this.startFireCapriole(this.player1));
+    this.player2.on('fireCaprioleStart', () => this.startFireCapriole(this.player2));
+
+    // Unduck music when non-fireCapriole supers end
+    const onSuperEnd = (p: Player) => {
+      if (p.characterDef.superMove !== 'fireCapriole') {
+        MusicManager.getInstance().unduckAfterSuper();
+      }
+    };
+    // flameDash/ghostPhase/ironWall/iceField have timers — unduck handled in their end callbacks
+    // For simplicity, set a delayed unduck for non-fireCapriole supers
+    this.player1.on('superActivated', () => {
+      if (this.player1.characterDef.superMove !== 'fireCapriole' &&
+          this.player1.characterDef.superMove !== 'thunderKick' &&
+          this.player1.characterDef.superMove !== 'poisonShot') {
+        const dur = this.player1.characterDef.superMove === 'flameDash' ? 2000 :
+                    this.player1.characterDef.superMove === 'ghostPhase' ? 2500 : 3000;
+        this.time.delayedCall(dur, () => MusicManager.getInstance().unduckAfterSuper());
+      }
+    });
+    this.player2.on('superActivated', () => {
+      if (this.player2.characterDef.superMove !== 'fireCapriole' &&
+          this.player2.characterDef.superMove !== 'thunderKick' &&
+          this.player2.characterDef.superMove !== 'poisonShot') {
+        const dur = this.player2.characterDef.superMove === 'flameDash' ? 2000 :
+                    this.player2.characterDef.superMove === 'ghostPhase' ? 2500 : 3000;
+        this.time.delayedCall(dur, () => MusicManager.getInstance().unduckAfterSuper());
+      }
     });
   }
 
@@ -623,10 +680,15 @@ export class LocalGameScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     if (this.matchOver) return;
 
-    // Update ball trail
+    // Update ball trail / rotation / afterimages
     this.ball.update(time, delta);
 
-    // Ice field effect - check if any player has ice active
+    // fireCapriole sequence (uses real time, unaffected by timeScale)
+    if (this.fcState !== 'none') {
+      this.updateFireCapriole(delta);
+    }
+
+    // Ice field effect
     this.handleIceField();
 
     if (this.phase === 'playing' || this.phase === 'countdown') {
@@ -646,8 +708,16 @@ export class LocalGameScene extends Phaser.Scene {
       if (this.phase === 'playing' && !this.frozen && !this.matchOver) {
         const p1Input = this.getP1Input();
         const p2Input = this.getP2Input();
-        this.player1.handleInput(p1Input);
-        this.player2.handleInput(p2Input);
+
+        // Block input for player in fireCapriole
+        if (this.fcState !== 'none' && this.fcPlayer === this.player1) {
+          this.player2.handleInput(p2Input);
+        } else if (this.fcState !== 'none' && this.fcPlayer === this.player2) {
+          this.player1.handleInput(p1Input);
+        } else {
+          this.player1.handleInput(p1Input);
+          this.player2.handleInput(p2Input);
+        }
         this.touchControls?.resetEdgeTriggers();
 
         // Check kicks hitting ball
@@ -657,6 +727,9 @@ export class LocalGameScene extends Phaser.Scene {
         // Iron wall collision with ball
         this.checkIronWalls();
       }
+
+      // Movement effects (tilt + landing)
+      this.handleMovementEffects();
 
       // Update HUD
       this.updateHUD();
@@ -735,9 +808,25 @@ export class LocalGameScene extends Phaser.Scene {
         this.ball.poisoned = true;
       }
 
-      // Screen shake on strong kicks
-      if (force > 600) {
-        this.screenShake(3);
+      // Screen shake on every kick (2px / 100ms)
+      this.cameras.main.shake(100, 2 / 1000);
+
+      // 5-8 white impact particles at kick point
+      const numParticles = 5 + Math.floor(Math.random() * 4);
+      const kickPx = player.facingRight ? player.x + 20 : player.x - 20;
+      const kickPy = player.y;
+      for (let i = 0; i < numParticles; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 30 + Math.random() * 50;
+        const kp = this.add.arc(kickPx, kickPy, 2, 0, 360, false, 0xffffff, 0.8).setDepth(10);
+        this.tweens.add({
+          targets: kp,
+          x: kickPx + Math.cos(angle) * speed,
+          y: kickPy + Math.sin(angle) * speed,
+          alpha: 0,
+          duration: 200 + Math.random() * 100,
+          onComplete: () => kp.destroy(),
+        });
       }
 
       // Hit freeze
@@ -812,8 +901,36 @@ export class LocalGameScene extends Phaser.Scene {
     const scorer = scoringPlayer === 1 ? this.player1 : this.player2;
     const scorerColor = scorer.characterDef.color;
 
-    // Screen shake (intensity 8, duration 200ms)
-    this.cameras.main.shake(200, 8 / 1000);
+    // Strong screen shake (5px / 300ms)
+    this.cameras.main.shake(300, 5 / 1000);
+
+    // White flash 50ms
+    const whiteFlash = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0.7)
+      .setDepth(149);
+    this.tweens.add({
+      targets: whiteFlash,
+      alpha: 0,
+      duration: 50,
+      onComplete: () => whiteFlash.destroy(),
+    });
+
+    // Goal slow-mo (0.5s)
+    this.goalSlowMoActive = true;
+    this.physics.world.timeScale = 0.3;
+    this.tweens.timeScale = 0.3;
+    const goalSlowStart = performance.now();
+    const checkSlowEnd = () => {
+      if (performance.now() - goalSlowStart >= 500) {
+        if (this.goalSlowMoActive) {
+          this.physics.world.timeScale = 1;
+          this.tweens.timeScale = 1;
+          this.goalSlowMoActive = false;
+        }
+      } else {
+        requestAnimationFrame(checkSlowEnd);
+      }
+    };
+    requestAnimationFrame(checkSlowEnd);
 
     // "GOOOL!" text with scorer's color
     const rgb = Phaser.Display.Color.IntegerToRGB(scorerColor);
@@ -833,6 +950,25 @@ export class LocalGameScene extends Phaser.Scene {
       ease: 'Cubic.easeOut',
       onComplete: () => goalText.destroy(),
     });
+
+    // Team-colored particle explosion at goal (20 particles)
+    const goalX = scoringPlayer === 1 ? GOAL_RIGHT_X : GOAL_LEFT_X + GOAL_WIDTH;
+    const goalCY = GOAL_Y + GOAL_HEIGHT / 2;
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 40 + Math.random() * 80;
+      const gp = this.add.arc(goalX, goalCY, 3 + Math.random() * 3, 0, 360, false, scorerColor, 0.9);
+      gp.setDepth(99);
+      this.tweens.add({
+        targets: gp,
+        x: goalX + Math.cos(angle) * speed,
+        y: goalCY + Math.sin(angle) * speed,
+        alpha: 0,
+        scale: 0,
+        duration: 400 + Math.random() * 300,
+        onComplete: () => gp.destroy(),
+      });
+    }
 
     // 40 confetti particles (full screen spread with gravity arc)
     for (let i = 0; i < 40; i++) {
@@ -860,19 +996,24 @@ export class LocalGameScene extends Phaser.Scene {
       yoyo: true,
       ease: 'Sine.easeOut',
     });
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 12; i++) {
       const angle = Math.random() * Math.PI * 2;
       const sp = this.add.arc(scorer.x, scorer.y, 3, 0, 360, false, scorerColor, 0.8);
       sp.setDepth(98);
       this.tweens.add({
         targets: sp,
-        x: scorer.x + Math.cos(angle) * 40,
-        y: scorer.y + Math.sin(angle) * 40,
+        x: scorer.x + Math.cos(angle) * 50,
+        y: scorer.y + Math.sin(angle) * 50,
         alpha: 0,
-        duration: 400,
+        duration: 500,
         onComplete: () => sp.destroy(),
       });
     }
+
+    // Score text color flash with team color
+    const hexColor = `#${scorerColor.toString(16).padStart(6, '0')}`;
+    this.scoreText.setColor(hexColor);
+    this.time.delayedCall(600, () => this.scoreText.setColor('#ffffff'));
   }
 
   private resetPositions(): void {
@@ -957,10 +1098,13 @@ export class LocalGameScene extends Phaser.Scene {
     const secs = Math.max(0, this.timeRemaining) % 60;
     this.timerText.setText(`${mins}:${secs.toString().padStart(2, '0')}`);
 
-    // Timer: red + pulse in last 10 seconds
+    // Timer: orange when <30s, red + pulse when <10s
     if (this.timeRemaining <= 10 && this.timeRemaining > 0 && !this.overtime) {
       this.timerText.setColor('#ff4444');
       this.timerText.setScale(1 + Math.sin(this.time.now / 200) * 0.1);
+    } else if (this.timeRemaining <= 30 && this.timeRemaining > 10 && !this.overtime) {
+      this.timerText.setColor('#ff8800');
+      this.timerText.setScale(1);
     } else if (this.overtime) {
       this.timerText.setColor('#ff4444');
       // Show OVERTIME indicator
@@ -1014,12 +1158,12 @@ export class LocalGameScene extends Phaser.Scene {
       this.superMeter2.fillRoundedRect(GAME_WIDTH / 2 + 100, meterY - meterHeight / 2, p2Fill, meterHeight, meterRadius);
     }
 
-    // Glow when full — pulsing alpha
+    // Shimmer/glow when full — fast pulsing alpha
     if (p1Full && !this.superGlow1) {
       this.superGlow1 = this.tweens.add({
         targets: this.superMeter1,
-        alpha: { from: 0.5, to: 1 },
-        duration: 400,
+        alpha: { from: 0.4, to: 1 },
+        duration: 250,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
@@ -1033,8 +1177,8 @@ export class LocalGameScene extends Phaser.Scene {
     if (p2Full && !this.superGlow2) {
       this.superGlow2 = this.tweens.add({
         targets: this.superMeter2,
-        alpha: { from: 0.5, to: 1 },
-        duration: 400,
+        alpha: { from: 0.4, to: 1 },
+        duration: 250,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
@@ -1103,9 +1247,239 @@ export class LocalGameScene extends Phaser.Scene {
     }
   }
 
+  // ═══════════════════════════════════════════════════
+  // FIRE CAPRIOLE — "A MI" sequence
+  // ═══════════════════════════════════════════════════
+  private startFireCapriole(player: Player): void {
+    if (this.fcState !== 'none') return;
+    this.fcState = 'freeze';
+    this.fcPlayer = player;
+    this.fcStartMs = performance.now();
+    this.fcParticleTimer = 0;
+
+    // Freeze physics for 200ms
+    this.physics.pause();
+
+    // Orange screen flash
+    const flash = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xff6600, 0.6)
+      .setDepth(150);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 200,
+      onComplete: () => flash.destroy(),
+    });
+
+    // Play SFX
+    MusicManager.getInstance().playEffect('/sfx/super_ami.mp3');
+  }
+
+  private updateFireCapriole(delta: number): void {
+    if (!this.fcPlayer) return;
+    const elapsed = performance.now() - this.fcStartMs;
+    const player = this.fcPlayer;
+
+    if (this.fcState === 'freeze') {
+      if (elapsed >= 200) {
+        // Transition to capriole phase
+        this.fcState = 'capriole';
+        this.physics.resume();
+
+        // Slow-mo 0.3x
+        this.physics.world.timeScale = 0.3;
+        this.tweens.timeScale = 0.3;
+
+        // Camera zoom 1.1x
+        this.cameras.main.zoomTo(1.1, 300);
+
+        // Auto-jump at 2x velocity
+        player.body.setVelocityY(-1100); // JUMP_VELOCITY * 2
+
+        // 360° rotation tween (duration adjusted for time scale: 480ms at 0.3x ≈ 1600ms perceived)
+        this.tweens.add({
+          targets: player,
+          angle: 360,
+          duration: 480,
+          ease: 'Linear',
+        });
+      }
+    } else if (this.fcState === 'capriole') {
+      // Attract ball toward player
+      const dx = player.x - this.ball.x;
+      const dy = player.y - this.ball.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > BALL_RADIUS + 5) {
+        const attractStr = Math.max(500, dist * 5);
+        this.ball.body.setVelocity(
+          (dx / dist) * attractStr,
+          (dy / dist) * attractStr,
+        );
+      }
+
+      // Fire particles around player
+      this.fcParticleTimer += delta;
+      if (this.fcParticleTimer > 60) {
+        this.fcParticleTimer = 0;
+        for (let i = 0; i < 3; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const fp = this.add.arc(player.x, player.y, 3, 0, 360, false, 0xff4400, 0.8).setDepth(10);
+          this.tweens.add({
+            targets: fp,
+            x: player.x + Math.cos(angle) * 35,
+            y: player.y + Math.sin(angle) * 35,
+            alpha: 0,
+            duration: 150,
+            onComplete: () => fp.destroy(),
+          });
+        }
+      }
+
+      // End capriole at 1800ms total (200 freeze + 1600 capriole)
+      if (elapsed >= 1800) {
+        this.endFireCapriole();
+      }
+    }
+  }
+
+  private endFireCapriole(): void {
+    const player = this.fcPlayer!;
+
+    // Fire ball at 3x toward goal
+    const force = player.kickForce * 3;
+    const toGoalDir = player.playerIndex === 1 ? 1 : -1;
+    this.ball.body.setVelocity(toGoalDir * force, -0.3 * force);
+
+    // Fire trail on ball
+    this.ball.superTrailColor = 0xff4400;
+
+    // Charge super + track shot
+    player.chargeSuperFromKick();
+    this.sound_mgr.kick();
+    if (player.playerIndex === 1) this.shotsP1++;
+    else this.shotsP2++;
+
+    // Impact shake
+    this.cameras.main.shake(200, 5 / 1000);
+
+    // Reset player angle
+    player.setAngle(0);
+
+    // Reset state
+    this.fcState = 'none';
+    this.fcPlayer = null;
+    player.fireCaprioleActive = false;
+    player.superActive = false;
+
+    // Restore game speed
+    this.physics.world.timeScale = 1;
+    this.tweens.timeScale = 1;
+
+    // Camera back
+    this.cameras.main.zoomTo(1, 500);
+
+    // Unduck music
+    MusicManager.getInstance().unduckAfterSuper();
+
+    // Clear fire trail after 2s
+    this.time.delayedCall(2000, () => {
+      this.ball.superTrailColor = null;
+    });
+
+    // Fire particle explosion on ball impact (emit once at kick point)
+    const bx = this.ball.x;
+    const by = this.ball.y;
+    for (let i = 0; i < 15; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 30 + Math.random() * 60;
+      const ip = this.add.arc(bx, by, 3, 0, 360, false,
+        Math.random() < 0.5 ? 0xff4400 : 0xffaa00, 0.9).setDepth(10);
+      this.tweens.add({
+        targets: ip,
+        x: bx + Math.cos(angle) * speed,
+        y: by + Math.sin(angle) * speed,
+        alpha: 0,
+        scale: 0,
+        duration: 400 + Math.random() * 200,
+        onComplete: () => ip.destroy(),
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  // MOVEMENT EFFECTS — tilt, squash/stretch, dust
+  // ═══════════════════════════════════════════════════
+  private handleMovementEffects(): void {
+    this.handlePlayerMovement(this.player1);
+    this.handlePlayerMovement(this.player2);
+
+    // Landing detection
+    const p1OnGround = this.player1.body.blocked.down || this.player1.body.touching.down;
+    if (p1OnGround && this.p1WasInAir) {
+      this.onPlayerLanding(this.player1);
+    }
+    this.p1WasInAir = !p1OnGround;
+
+    const p2OnGround = this.player2.body.blocked.down || this.player2.body.touching.down;
+    if (p2OnGround && this.p2WasInAir) {
+      this.onPlayerLanding(this.player2);
+    }
+    this.p2WasInAir = !p2OnGround;
+  }
+
+  private handlePlayerMovement(player: Player): void {
+    // Skip tilt during fireCapriole (angle controlled by rotation tween)
+    if (player.fireCaprioleActive) return;
+
+    // Running tilt 3-5°
+    const vx = player.body.velocity.x;
+    if (vx > 10) {
+      player.setAngle(4);
+    } else if (vx < -10) {
+      player.setAngle(-4);
+    } else {
+      player.setAngle(0);
+    }
+  }
+
+  private onPlayerLanding(player: Player): void {
+    // Squash on landing (scaleY 0.85 for 100ms)
+    this.tweens.add({
+      targets: player,
+      scaleY: 0.85,
+      duration: 50,
+      yoyo: true,
+      ease: 'Sine.easeOut',
+    });
+
+    // Dust particles
+    for (let i = 0; i < 3; i++) {
+      const dx = (Math.random() - 0.5) * 20;
+      const dust = this.add.arc(player.x + dx, GROUND_Y, 2, 0, 360, false, 0x8b7355, 0.4);
+      this.tweens.add({
+        targets: dust,
+        y: GROUND_Y - 8 - Math.random() * 8,
+        x: player.x + dx + (Math.random() - 0.5) * 15,
+        alpha: 0,
+        scale: 0.3,
+        duration: 250,
+        onComplete: () => dust.destroy(),
+      });
+    }
+  }
+
   shutdown(): void {
     // Restore music volume
     MusicManager.getInstance().setGameplayMode(false);
+
+    // Restore time scale
+    if (this.physics.world) {
+      this.physics.world.timeScale = 1;
+    }
+    this.tweens.timeScale = 1;
+
+    // Reset fireCapriole state
+    this.fcState = 'none';
+    this.fcPlayer = null;
 
     // Clean up all timers
     this.time.removeAllEvents();

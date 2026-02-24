@@ -56,7 +56,8 @@ export interface PhysicsPlayer {
   ironWallActive: boolean;
   poisonShotActive: boolean;
   iceFieldActive: boolean;
-  fireCaprioleActive: boolean;
+  fireCapriolePhase: number;  // 0=inactive, 1=freeze(200ms), 2=attract+capriole(1600ms)
+  fireCaprioleTimer: number;
 }
 
 export interface PhysicsState {
@@ -94,7 +95,8 @@ export class ServerPhysics {
       ironWallActive: false,
       poisonShotActive: false,
       iceFieldActive: false,
-      fireCaprioleActive: false,
+      fireCapriolePhase: 0,
+      fireCaprioleTimer: 0,
     };
   }
 
@@ -132,6 +134,13 @@ export class ServerPhysics {
 
   private static processPlayerInput(player: PhysicsPlayer, input: InputState, state: PhysicsState, dtSec: number, dtMs: number): void {
     const s = player.state;
+
+    // fireCapriole phases override normal input
+    if (player.fireCapriolePhase > 0) {
+      this.updateFireCapriole(player, state, dtSec, dtMs);
+      return;
+    }
+
     // Fix #1: Flame Dash speed 2x → 1.5x (aligns with Player.ts)
     const speed = player.flameDashActive ? player.moveSpeed * 1.5 : player.moveSpeed;
 
@@ -157,8 +166,7 @@ export class ServerPhysics {
 
     // Jump
     if (input.jump && s.jumpsRemaining > 0) {
-      let jumpVel = s.jumpsRemaining === MAX_JUMPS ? JUMP_VELOCITY : DOUBLE_JUMP_VELOCITY;
-      if (player.fireCaprioleActive) jumpVel *= 1.5;
+      const jumpVel = s.jumpsRemaining === MAX_JUMPS ? JUMP_VELOCITY : DOUBLE_JUMP_VELOCITY;
       s.vy = jumpVel;
       s.jumpsRemaining--;
     }
@@ -194,7 +202,8 @@ export class ServerPhysics {
         player.ghostPhaseActive = false;
         player.ironWallActive = false;
         player.iceFieldActive = false;
-        player.fireCaprioleActive = false;
+        player.fireCapriolePhase = 0;
+        player.fireCaprioleTimer = 0;
         s.superActive = false;
       }
     }
@@ -273,8 +282,9 @@ export class ServerPhysics {
         player.superTimer = 3000;
         break;
       case 'fireCapriole':
-        player.fireCaprioleActive = true;
-        player.superTimer = 1500;
+        player.fireCapriolePhase = 1;
+        player.fireCaprioleTimer = 200;
+        // Don't set superTimer — fireCapriole manages its own phased timer
         break;
     }
   }
@@ -301,20 +311,6 @@ export class ServerPhysics {
       let force = player.kickForce;
       // Fix #2: Flame Dash kick force 2x → 1.5x (aligns with Player.ts)
       if (player.flameDashActive) force *= 1.5;
-
-      // fireCapriole: 2x force directed toward opponent goal
-      if (player.fireCaprioleActive) {
-        force *= 2;
-        const toGoalDir = s.id === 1 ? 1 : -1;
-        ball.vx = toGoalDir * force;
-        ball.vy = -0.3 * force;
-        player.fireCaprioleActive = false;
-        s.superActive = false;
-        player.superTimer = 0;
-        s.superMeter = Math.min(SUPER_MAX, s.superMeter + SUPER_CHARGE_KICK);
-        state.events.push({ type: 'kick', playerIndex: s.id });
-        return;
-      }
 
       if (player.thunderKickReady) {
         force *= 3;
@@ -501,6 +497,68 @@ export class ServerPhysics {
     s.superMeter = Math.min(SUPER_MAX, s.superMeter + SUPER_CHARGE_KICK);
   }
 
+  private static updateFireCapriole(player: PhysicsPlayer, state: PhysicsState, dtSec: number, dtMs: number): void {
+    const s = player.state;
+    player.fireCaprioleTimer -= dtMs;
+
+    if (player.fireCapriolePhase === 1) {
+      // Freeze phase — player doesn't move
+      s.vx = 0;
+      s.vy = 0;
+
+      if (player.fireCaprioleTimer <= 0) {
+        // Transition to phase 2: auto-jump + ball attraction
+        player.fireCapriolePhase = 2;
+        player.fireCaprioleTimer = 1600;
+        s.vy = JUMP_VELOCITY * 2; // 2x jump height
+      }
+    } else if (player.fireCapriolePhase === 2) {
+      // Capriole phase — gravity applies, no horizontal control
+      s.vx = 0;
+      s.vy += GRAVITY * dtSec;
+
+      // Magnetic ball attraction toward player
+      const ball = state.ball;
+      const dx = s.x - ball.x;
+      const dy = s.y - ball.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > BALL_RADIUS + 5) {
+        const attractStr = Math.max(500, dist * 5);
+        ball.vx = (dx / dist) * attractStr;
+        ball.vy = (dy / dist) * attractStr;
+      }
+
+      if (player.fireCaprioleTimer <= 0) {
+        // Fire ball at 3x force toward opponent goal
+        const force = player.kickForce * 3;
+        const toGoalDir = s.id === 1 ? 1 : -1;
+        ball.vx = toGoalDir * force;
+        ball.vy = -0.3 * force;
+
+        player.fireCapriolePhase = 0;
+        player.fireCaprioleTimer = 0;
+        s.superActive = false;
+
+        s.superMeter = Math.min(SUPER_MAX, s.superMeter + SUPER_CHARGE_KICK);
+        state.events.push({ type: 'kick', playerIndex: s.id });
+      }
+
+      // Position update
+      s.x += s.vx * dtSec;
+      s.y += s.vy * dtSec;
+
+      // Ground collision
+      const halfH = PLAYER_TOTAL_HEIGHT / 2;
+      if (s.y + halfH >= GROUND_Y) { s.y = GROUND_Y - halfH; s.vy = 0; }
+
+      // Wall collision
+      const halfW = PLAYER_BODY_WIDTH / 2;
+      if (s.x - halfW < 0) { s.x = halfW; s.vx = 0; }
+      if (s.x + halfW > GAME_WIDTH) { s.x = GAME_WIDTH - halfW; s.vx = 0; }
+      if (s.y - halfH < 0) { s.y = halfH; s.vy = 0; }
+    }
+  }
+
   static checkGoal(ball: BallState): number | null {
     // Left goal (Player 2 scores)
     if (ball.x - BALL_RADIUS <= GOAL_LEFT_X + GOAL_WIDTH &&
@@ -532,5 +590,7 @@ export class ServerPhysics {
     player.state.jumpsRemaining = MAX_JUMPS;
     player.state.isKicking = false;
     player.ghostKickDelay = 0;
+    player.fireCapriolePhase = 0;
+    player.fireCaprioleTimer = 0;
   }
 }

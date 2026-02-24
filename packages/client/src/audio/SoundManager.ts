@@ -52,9 +52,10 @@ export class SoundManager {
     gain.connect(ctx.destination);
 
     const t = ctx.currentTime;
+    const pitchMult = 0.9 + Math.random() * 0.2; // ±10% random pitch
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(200, t);
-    osc.frequency.exponentialRampToValueAtTime(80, t + 0.12);
+    osc.frequency.setValueAtTime(200 * pitchMult, t);
+    osc.frequency.exponentialRampToValueAtTime(80 * pitchMult, t + 0.12);
     gain.gain.setValueAtTime(0.3, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
     osc.start(t);
