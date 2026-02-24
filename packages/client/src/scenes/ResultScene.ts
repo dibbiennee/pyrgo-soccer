@@ -6,6 +6,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { SocketManager } from '../network/SocketManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 interface MatchStats {
   shotsP1: number;
@@ -58,6 +59,7 @@ export class ResultScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
 
     const sm = SoundManager.getInstance();

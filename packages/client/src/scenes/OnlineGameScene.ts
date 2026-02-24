@@ -32,6 +32,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 interface ServerSnapshot {
   time: number;
@@ -130,6 +131,7 @@ export class OnlineGameScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
     this.sound_mgr.enabled = this.game.registry.get('soundOn') !== false;
     this.stopCrowdAmbient = this.sound_mgr.crowdAmbient();

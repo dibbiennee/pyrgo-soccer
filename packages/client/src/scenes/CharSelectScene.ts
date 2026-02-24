@@ -10,6 +10,7 @@ import { CharacterStorage } from '../storage/CharacterStorage';
 import { CharacterApi, type PublishedCharacter } from '../api/CharacterApi';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 type SelectTab = 'mine' | 'preset' | 'community';
 
@@ -46,6 +47,7 @@ export class CharSelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e);

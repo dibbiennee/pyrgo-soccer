@@ -17,6 +17,7 @@ import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { showToast } from '../ui/ToastNotification';
 import { SoundManager } from '../audio/SoundManager';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 // ─── Constants ─────────────────────────────────────────
 const TOTAL_STAT_POINTS = 15;
@@ -83,6 +84,7 @@ export class CharacterCreatorScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
 
     // Background

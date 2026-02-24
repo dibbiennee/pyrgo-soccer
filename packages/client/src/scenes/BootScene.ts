@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 import { SoundManager } from '../audio/SoundManager';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -8,6 +9,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    setupResponsiveCamera(this);
     const width = GAME_WIDTH;
     const height = GAME_HEIGHT;
 

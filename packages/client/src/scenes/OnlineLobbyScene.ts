@@ -10,6 +10,7 @@ import { SocketManager } from '../network/SocketManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 export class OnlineLobbyScene extends Phaser.Scene {
   private socket!: SocketManager;
@@ -41,6 +42,7 @@ export class OnlineLobbyScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
 
     const sm = SoundManager.getInstance();

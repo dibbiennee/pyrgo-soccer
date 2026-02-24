@@ -8,6 +8,7 @@ import type { CharacterRef, Appearance } from '@pyrgo/shared';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 export class VsScreen extends Phaser.Scene {
   private charRef1: CharacterRef = { type: 'preset', id: 1 };
@@ -34,6 +35,7 @@ export class VsScreen extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this, 200);
 
     const sm = SoundManager.getInstance();

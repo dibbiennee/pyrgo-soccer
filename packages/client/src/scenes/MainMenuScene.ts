@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 declare const __APP_VERSION__: string;
 
@@ -15,6 +16,7 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
 
     // ── Background ──────────────────────────────────

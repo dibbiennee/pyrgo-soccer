@@ -107,13 +107,11 @@ export class TouchControls {
   ): void {
     const bg = this.scene.add.rectangle(x, y, w, h, baseColor, 0.6);
     bg.setStrokeStyle(2, 0xffffff, 0.3);
-    bg.setScrollFactor(0);
-
     const fontSize = text.length <= 2 ? '22px' : '13px';
     const label = this.scene.add.text(x, y, text, {
       fontSize, fontFamily: 'Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2,
-    }).setOrigin(0.5).setScrollFactor(0);
+    }).setOrigin(0.5);
 
     this.container.add(bg);
     this.container.add(label);
@@ -136,7 +134,7 @@ export class TouchControls {
   private processPointer(pointer: Phaser.Input.Pointer, isNewPress: boolean): void {
     for (const [id, btn] of this.buttons) {
       const rect = btn.bg.getBounds();
-      if (rect.contains(pointer.x, pointer.y)) {
+      if (rect.contains(pointer.worldX, pointer.worldY)) {
         this.pressButton(id, btn, isNewPress);
       }
     }

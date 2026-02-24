@@ -7,6 +7,7 @@ import { getDeviceId } from '../storage/DeviceId';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { showToast } from '../ui/ToastNotification';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 const CARDS_PER_PAGE = 6;
 
@@ -25,6 +26,7 @@ export class CommunityGalleryScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
     this.page = 0;
     this.selectedChar = null;

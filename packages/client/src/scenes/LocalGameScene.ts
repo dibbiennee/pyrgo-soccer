@@ -36,6 +36,7 @@ import type { InputState, CharacterDef, CharacterRef, ScoreState } from '@pyrgo/
 import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
+import { setupResponsiveCamera } from '../utils/responsive';
 
 export class LocalGameScene extends Phaser.Scene {
   // Game objects
@@ -138,8 +139,10 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   create(): void {
+    setupResponsiveCamera(this);
     fadeIn(this);
     this.sound_mgr.enabled = this.game.registry.get('soundOn') !== false;
+    this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     this.createField();
     this.createGoals();
     this.createPlayers();
