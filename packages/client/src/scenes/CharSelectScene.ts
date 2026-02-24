@@ -71,44 +71,44 @@ export class CharSelectScene extends Phaser.Scene {
     this.showGrid();
 
     // ── Preview area (compact) ──────────────────
-    this.previewContainer = this.add.container(L.cx, L.y(0.44));
+    this.previewContainer = this.add.container(L.cx, L.y(0.41));
 
     this.nameText = this.add.text(0, 0, '', {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      fontSize: '25px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
     this.previewContainer.add(this.nameText);
 
     const statsX = -180;
-    const statY0 = 22;
-    const statGap = 22;
+    const statY0 = 26;
+    const statGap = 26;
     this.statsTexts = {
-      speed: this.add.text(statsX, statY0, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
-      power: this.add.text(statsX, statY0 + statGap, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
-      defense: this.add.text(statsX, statY0 + statGap * 2, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
+      speed: this.add.text(statsX, statY0, '', { fontSize: '17px', fontFamily: 'Arial', color: '#ffffff' }),
+      power: this.add.text(statsX, statY0 + statGap, '', { fontSize: '17px', fontFamily: 'Arial', color: '#ffffff' }),
+      defense: this.add.text(statsX, statY0 + statGap * 2, '', { fontSize: '17px', fontFamily: 'Arial', color: '#ffffff' }),
     };
     this.previewContainer.add(this.statsTexts.speed);
     this.previewContainer.add(this.statsTexts.power);
     this.previewContainer.add(this.statsTexts.defense);
 
     this.superText = this.add.text(0, statY0 + statGap * 3, '', {
-      fontSize: '12px', fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: 500 },
+      fontSize: '15px', fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: 500 },
     }).setOrigin(0.5);
     this.previewContainer.add(this.superText);
 
     this.updatePreview();
 
     // ── Bottom buttons (compact) ──────────────────
-    createButton(this, L.cx, L.y(0.62), 'CONFIRM', () => this.confirmSelection(), {
+    createButton(this, L.cx, L.y(0.82), 'CONFIRM', () => this.confirmSelection(), {
       width: 180, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66,
       fontSize: '16px',
     });
 
-    createButton(this, L.x(0.12), L.y(0.62), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+    createButton(this, L.x(0.12), L.y(0.82), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
       width: 120, height: 36, fontSize: '13px', strokeColor: 0x666666,
     });
 
-    createButton(this, L.x(0.88), L.y(0.62), '+ CREATE', () => {
+    createButton(this, L.x(0.88), L.y(0.82), '+ CREATE', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'CharSelect' });
     }, {
       width: 140, height: 36, fontSize: '13px', fillColor: 0x225588, strokeColor: 0x44aaff,
@@ -190,7 +190,7 @@ export class CharSelectScene extends Phaser.Scene {
   private buildPresetGrid(): void {
     const L = this.L;
     const count = CHARACTERS.length;
-    const cardS = 90;
+    const cardS = 100;
     const gap = 15;
     const spacing = cardS + gap;
     const totalW = (count - 1) * spacing;
@@ -206,7 +206,7 @@ export class CharSelectScene extends Phaser.Scene {
   private buildMyCharsGrid(): void {
     const L = this.L;
     const customs = CharacterStorage.getAll();
-    const cardS = 90;
+    const cardS = 100;
     const gap = 15;
     const spacing = cardS + gap;
     const y = L.y(0.26);
@@ -231,7 +231,7 @@ export class CharSelectScene extends Phaser.Scene {
 
   private buildCommunityGrid(): void {
     const L = this.L;
-    const cardS = 90;
+    const cardS = 100;
     const gap = 15;
     const spacing = cardS + gap;
     const y = L.y(0.26);
@@ -271,7 +271,7 @@ export class CharSelectScene extends Phaser.Scene {
 
   private createCharCard(x: number, y: number, name: string, charDef: CharacterDef, ref: CharacterRef): void {
     const L = this.L;
-    const cardS = 90;
+    const cardS = 100;
     const container = this.add.container(x, y);
     this.gridContainer.add(container);
 

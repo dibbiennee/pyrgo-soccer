@@ -354,7 +354,7 @@ export class CharacterCreatorScene extends Phaser.Scene {
   private buildSuperPanel(): void {
     const L = this.L;
     const cardW = L.w * 0.17;
-    const cardH = L.h * 0.09;
+    const cardH = L.h * 0.12;
     const gap = L.pad(0.5);
     const panelCx = L.x(0.55);
     const startX = panelCx - (cardW + gap) / 2;
@@ -377,12 +377,12 @@ export class CharacterCreatorScene extends Phaser.Scene {
       this.panelContainer.add(dot);
 
       const nameText = this.add.text(x - cardW / 2 + L.pad(1.5) + dotR, y - cardH * 0.3, move.displayName, {
-        fontSize: L.fontSize('tiny'), fontFamily: 'Arial Black, Arial', color: isSelected ? '#ffffff' : '#aaaacc',
+        fontSize: '15px', fontFamily: 'Arial Black, Arial', color: isSelected ? '#ffffff' : '#aaaacc',
       });
       this.panelContainer.add(nameText);
 
       const descText = this.add.text(x - cardW / 2 + L.pad(0.8), y + cardH * 0.05, move.description, {
-        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#888899',
+        fontSize: '13px', fontFamily: 'Arial', color: '#888899',
         wordWrap: { width: cardW - L.pad(1.5) },
       });
       this.panelContainer.add(descText);
