@@ -28,7 +28,7 @@ export class HowToPlayScene extends Phaser.Scene {
     };
 
     // ─── Controls ───────────────────────
-    this.add.text(leftX, L.y(0.15), 'CONTROLS', sectionStyle).setOrigin(0.5);
+    this.add.text(leftX, L.y(0.14), 'CONTROLS', sectionStyle).setOrigin(0.5);
 
     // Touch controls
     this.add.text(leftX, L.y(0.21), 'Touch / Mobile:', {
@@ -82,8 +82,8 @@ export class HowToPlayScene extends Phaser.Scene {
     this.add.text(rightX, L.y(0.60), 'Create a room and share the\n4-letter code with a friend,\nor enter their code to join.\nBoth players ready up to start!', bodyStyle).setOrigin(0.5);
 
     // ─── Goal ───────────────────────────
-    this.add.text(leftX, L.y(0.58), 'OBJECTIVE', sectionStyle).setOrigin(0.5);
-    this.add.text(leftX, L.y(0.66), 'Score goals by kicking the ball\ninto the opponent\'s net.\nFirst to 5 goals or highest\nscore when time runs out wins!', bodyStyle).setOrigin(0.5);
+    this.add.text(leftX, L.y(0.60), 'OBJECTIVE', sectionStyle).setOrigin(0.5);
+    this.add.text(leftX, L.y(0.68), 'Score goals by kicking the ball\ninto the opponent\'s net.\nFirst to 5 goals or highest\nscore when time runs out wins!', bodyStyle).setOrigin(0.5);
 
     // Back button
     const btn = L.button('small');

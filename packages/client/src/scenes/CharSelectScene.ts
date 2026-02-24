@@ -99,16 +99,16 @@ export class CharSelectScene extends Phaser.Scene {
     this.updatePreview();
 
     // ── Bottom buttons (compact) ──────────────────
-    createButton(this, L.cx, L.y(0.82), 'CONFIRM', () => this.confirmSelection(), {
+    createButton(this, L.cx, L.y(0.78), 'CONFIRM', () => this.confirmSelection(), {
       width: 180, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66,
       fontSize: '16px',
     });
 
-    createButton(this, L.x(0.12), L.y(0.82), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+    createButton(this, L.x(0.12), L.y(0.78), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
       width: 120, height: 36, fontSize: '13px', strokeColor: 0x666666,
     });
 
-    createButton(this, L.x(0.88), L.y(0.82), '+ CREATE', () => {
+    createButton(this, L.x(0.88), L.y(0.78), '+ CREATE', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'CharSelect' });
     }, {
       width: 140, height: 36, fontSize: '13px', fillColor: 0x225588, strokeColor: 0x44aaff,
