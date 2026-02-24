@@ -79,8 +79,6 @@ export class OnlineGameScene extends Phaser.Scene {
   private countdownText!: Phaser.GameObjects.Text;
   private pingIndicator!: Phaser.GameObjects.Text;
   private overtimeText?: Phaser.GameObjects.Text;
-  private opponentNameText!: Phaser.GameObjects.Text;
-
   // ─── Disconnect overlay ──────────────────────────────
   private disconnectOverlay?: Phaser.GameObjects.Rectangle;
   private disconnectText?: Phaser.GameObjects.Text;
@@ -102,6 +100,13 @@ export class OnlineGameScene extends Phaser.Scene {
   // Server state for super meters
   private serverSuperMeter1 = 0;
   private serverSuperMeter2 = 0;
+
+  // Goal slow-mo
+  private goalSlowMoActive = false;
+
+  // Pause
+  private paused = false;
+  private pauseElements: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super('OnlineGame');
@@ -126,6 +131,9 @@ export class OnlineGameScene extends Phaser.Scene {
     this.serverPhase = 'countdown';
     this.overtime = false;
     this.disconnectCountdown = 0;
+    this.paused = false;
+    this.pauseElements = [];
+    this.goalSlowMoActive = false;
 
     this.char1 = resolveCharacter(this.charRef1);
     this.char2 = resolveCharacter(this.charRef2);
@@ -355,39 +363,133 @@ export class OnlineGameScene extends Phaser.Scene {
       fontSize: '10px', fontFamily: 'Courier New, monospace', color: '#00ff66',
     }).setOrigin(1, 0).setDepth(10);
 
-    // Opponent name
-    const opponentChar = this.myPlayerIndex === 1 ? this.char2 : this.char1;
-    const opX = this.myPlayerIndex === 1 ? GAME_WIDTH - 80 : 80;
-    this.opponentNameText = this.add.text(opX, hudTop + 55, opponentChar.name, {
-      fontSize: '10px', fontFamily: 'Arial', color: THEME.textSecondary,
-    }).setOrigin(0.5).setDepth(10);
+    // Player names
+    this.add.text(GAME_WIDTH / 2 - 100, hudTop, this.char1.name, {
+      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(1, 0).setDepth(10);
 
-    // Exit button
-    createButton(this, 40, hudTop + 10, 'EXIT', () => {
-      this.showExitConfirmation();
-    }, { width: 60, height: 24, fontSize: '10px', fillColor: 0x994444, strokeColor: 0xff4444, depth: 10 });
+    this.add.text(GAME_WIDTH / 2 + 100, hudTop, this.char2.name, {
+      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0, 0).setDepth(10);
+
+    // Pause button (top-left)
+    const pauseBtn = this.add.text(30, hudTop + 4, '\u23F8', {
+      fontSize: '28px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(10);
+    pauseBtn.on('pointerdown', () => {
+      if (!this.paused) this.togglePause();
+    });
   }
 
-  private showExitConfirmation(): void {
-    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.85)
-      .setDepth(200).setInteractive();
+  // ═══════════════════════════════════════════════════
+  // PAUSE MENU (settings overlay — server keeps running)
+  // ═══════════════════════════════════════════════════
+  private togglePause(): void {
+    if (this.paused) {
+      this.resumeFromPause();
+    } else {
+      this.showPauseMenu();
+    }
+  }
 
-    const text = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30, 'Vuoi abbandonare?\nL\'avversario vincera\'', {
-      fontSize: '18px', fontFamily: 'Arial', color: '#ffffff', align: 'center',
-    }).setOrigin(0.5).setDepth(201);
+  private showPauseMenu(): void {
+    this.paused = true;
+    const D = 300;
+    const cx = GAME_WIDTH / 2;
+    const sm = SoundManager.getInstance();
+    const musicMgr = MusicManager.getInstance();
 
-    const yesBtn = createButton(this, GAME_WIDTH / 2 - 80, GAME_HEIGHT / 2 + 40, 'SI', () => {
+    const overlay = this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.8)
+      .setDepth(D).setInteractive();
+
+    const title = this.add.text(cx, 70, 'PAUSA', {
+      fontSize: '36px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(D + 1);
+
+    // SFX toggle
+    const sfxBtn = this.add.text(cx, 130, `Effetti: ${sm.enabled ? 'ON' : 'OFF'}`, {
+      fontSize: '18px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    sfxBtn.on('pointerdown', () => {
+      sm.enabled = !sm.enabled;
+      this.game.registry.set('soundOn', sm.enabled);
+      sfxBtn.setText(`Effetti: ${sm.enabled ? 'ON' : 'OFF'}`);
+      if (sm.enabled) sm.menuClick();
+    });
+
+    // Music toggle
+    const musicBtn = this.add.text(cx, 170, `Musica: ${musicMgr.isMusicEnabled() ? 'ON' : 'OFF'}`, {
+      fontSize: '18px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    musicBtn.on('pointerdown', () => {
+      const on = !musicMgr.isMusicEnabled();
+      musicMgr.setMusicEnabled(on);
+      musicBtn.setText(`Musica: ${on ? 'ON' : 'OFF'}`);
+      if (sm.enabled) sm.menuClick();
+    });
+
+    // Song picker
+    const songLabel = this.add.text(cx, 215, musicMgr.getCurrentName(), {
+      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1);
+
+    const prevSong = this.add.text(cx - 110, 215, '<', {
+      fontSize: '20px', fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    prevSong.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      musicMgr.switchTo(musicMgr.getCurrentIndex() - 1);
+      songLabel.setText(musicMgr.getCurrentName());
+    });
+
+    const nextSong = this.add.text(cx + 110, 215, '>', {
+      fontSize: '20px', fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    nextSong.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      musicMgr.switchTo(musicMgr.getCurrentIndex() + 1);
+      songLabel.setText(musicMgr.getCurrentName());
+    });
+
+    // Resume
+    const resumeBtn = this.add.text(cx, 290, '\u25B6  RIPRENDI', {
+      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: THEME.successHex,
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    resumeBtn.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      this.resumeFromPause();
+    });
+
+    // Exit (with warning)
+    const exitBtn = this.add.text(cx, 345, 'ABBANDONA', {
+      fontSize: '20px', fontFamily: 'Arial', color: THEME.dangerHex,
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    exitBtn.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      this.resumeFromPause();
       this.socket.emit('ROOM_LEAVE', {});
       this.cleanupAll();
       transitionTo(this, 'MainMenu');
-    }, { width: 100, height: 36, fillColor: 0x994444, strokeColor: 0xff4444, depth: 201 });
+    });
 
-    const noBtn = createButton(this, GAME_WIDTH / 2 + 80, GAME_HEIGHT / 2 + 40, 'NO', () => {
-      overlay.destroy();
-      text.destroy();
-      yesBtn.container.destroy();
-      noBtn.container.destroy();
-    }, { width: 100, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66, depth: 201 });
+    this.pauseElements = [overlay, title, sfxBtn, musicBtn, songLabel, prevSong, nextSong, resumeBtn, exitBtn];
+  }
+
+  private resumeFromPause(): void {
+    this.pauseElements.forEach(e => e.destroy());
+    this.pauseElements = [];
+    this.paused = false;
   }
 
   // ═══════════════════════════════════════════════════
@@ -472,6 +574,22 @@ export class OnlineGameScene extends Phaser.Scene {
       const whiteFlash = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0.7)
         .setDepth(149);
       this.tweens.add({ targets: whiteFlash, alpha: 0, duration: 50, onComplete: () => whiteFlash.destroy() });
+
+      // Goal slow-mo (0.5s) — tweens only since physics is server-side
+      this.goalSlowMoActive = true;
+      this.tweens.timeScale = 0.3;
+      const goalSlowStart = performance.now();
+      const checkSlowEnd = () => {
+        if (performance.now() - goalSlowStart >= 500) {
+          if (this.goalSlowMoActive) {
+            this.tweens.timeScale = 1;
+            this.goalSlowMoActive = false;
+          }
+        } else {
+          requestAnimationFrame(checkSlowEnd);
+        }
+      };
+      requestAnimationFrame(checkSlowEnd);
 
       // Team-colored text
       const scorer = data.scoringPlayer === 1 ? this.char1 : this.char2;
@@ -917,10 +1035,13 @@ export class OnlineGameScene extends Phaser.Scene {
 
   shutdown(): void {
     this.cleanupAll();
+    this.resumeFromPause();
     this.time.removeAllEvents();
+    this.tweens.timeScale = 1;
     this.tweens.killAll();
     this.touchControls?.destroy();
     this.touchControls = undefined;
+    this.goalSlowMoActive = false;
     MusicManager.getInstance().setGameplayMode(false);
   }
 }
