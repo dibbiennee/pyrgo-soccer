@@ -35,6 +35,7 @@ import {
 import type { InputState, CharacterDef, CharacterRef, ScoreState } from '@pyrgo/shared';
 import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
+import { MusicManager } from '../audio/MusicManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { setupGameCamera } from '../utils/responsive';
 import { THEME } from '../ui/UITheme';
@@ -74,9 +75,6 @@ export class LocalGameScene extends Phaser.Scene {
   private superGlow1?: Phaser.Tweens.Tween;
   private superGlow2?: Phaser.Tweens.Tween;
   private lastScore: ScoreState = { player1: 0, player2: 0 };
-
-  // Crowd ambient
-  private stopCrowdAmbient: (() => void) | null = null;
 
   // Match stats
   public shotsP1 = 0;
@@ -136,7 +134,6 @@ export class LocalGameScene extends Phaser.Scene {
     this.supersUsedP1 = 0;
     this.supersUsedP2 = 0;
     this.lastScore = { player1: 0, player2: 0 };
-    this.stopCrowdAmbient = null;
   }
 
   create(): void {
@@ -154,8 +151,8 @@ export class LocalGameScene extends Phaser.Scene {
     this.createTouchControls();
     this.startCountdown();
 
-    // Crowd ambient sound
-    this.stopCrowdAmbient = this.sound_mgr.crowdAmbient();
+    // Lower music volume during gameplay
+    MusicManager.getInstance().setGameplayMode(true);
   }
 
   private createField(): void {
@@ -716,6 +713,7 @@ export class LocalGameScene extends Phaser.Scene {
         const superColors: Record<string, number> = {
           flameDash: 0xff4400, thunderKick: 0xffee00, ghostPhase: 0xaa44ff,
           ironWall: 0x00ccff, poisonShot: 0x88ff00, iceField: 0x88ddff,
+          fireCapriole: 0xff4400,
         };
         this.ball.superTrailColor = superColors[player.characterDef.superMove] ?? null;
         this.time.delayedCall(800, () => { this.ball.superTrailColor = null; });
@@ -853,9 +851,6 @@ export class LocalGameScene extends Phaser.Scene {
         onComplete: () => p.destroy(),
       });
     }
-
-    // Crowd cheer
-    this.sound_mgr.crowdCheer();
 
     // Scorer mini jump + colored particles
     this.tweens.add({
@@ -1068,6 +1063,7 @@ export class LocalGameScene extends Phaser.Scene {
     const colors: Record<string, number> = {
       flameDash: 0xff4400, thunderKick: 0xffee00, ghostPhase: 0xaa44ff,
       ironWall: 0x00ccff, poisonShot: 0x88ff00, iceField: 0x88ddff,
+      fireCapriole: 0xff4400,
     };
     const color = colors[superInfo] ?? 0xffffff;
 
@@ -1108,11 +1104,8 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   shutdown(): void {
-    // Stop crowd ambient
-    if (this.stopCrowdAmbient) {
-      this.stopCrowdAmbient();
-      this.stopCrowdAmbient = null;
-    }
+    // Restore music volume
+    MusicManager.getInstance().setGameplayMode(false);
 
     // Clean up all timers
     this.time.removeAllEvents();

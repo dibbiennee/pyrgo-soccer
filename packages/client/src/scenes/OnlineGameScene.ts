@@ -29,6 +29,7 @@ import type {
 import { SocketManager } from '../network/SocketManager';
 import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
+import { MusicManager } from '../audio/MusicManager';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
@@ -97,7 +98,6 @@ export class OnlineGameScene extends Phaser.Scene {
 
   // Sound
   private sound_mgr = SoundManager.getInstance();
-  private stopCrowdAmbient: (() => void) | null = null;
 
   // Server state for super meters
   private serverSuperMeter1 = 0;
@@ -135,7 +135,7 @@ export class OnlineGameScene extends Phaser.Scene {
     setupGameCamera(this);
     fadeIn(this);
     this.sound_mgr.enabled = this.game.registry.get('soundOn') !== false;
-    this.stopCrowdAmbient = this.sound_mgr.crowdAmbient();
+    MusicManager.getInstance().setGameplayMode(true);
 
     this.createField();
     this.createGoals();
@@ -456,7 +456,6 @@ export class OnlineGameScene extends Phaser.Scene {
     this.socket.on('GOAL_SCORED', (data: { scoringPlayer: number; newScore: ScoreState; points: number }) => {
       this.score = data.newScore;
       this.sound_mgr.goal();
-      this.sound_mgr.crowdCheer();
       this.cameras.main.shake(300, 8 / 1000);
 
       // Goal text
@@ -809,9 +808,6 @@ export class OnlineGameScene extends Phaser.Scene {
     this.tweens.killAll();
     this.touchControls?.destroy();
     this.touchControls = undefined;
-    if (this.stopCrowdAmbient) {
-      this.stopCrowdAmbient();
-      this.stopCrowdAmbient = null;
-    }
+    MusicManager.getInstance().setGameplayMode(false);
   }
 }

@@ -22,6 +22,7 @@ import {
 } from '@pyrgo/shared';
 import type { CharacterDef, InputState, SuperMoveId, Appearance } from '@pyrgo/shared';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
+import { MusicManager } from '../audio/MusicManager';
 
 export class Player extends Phaser.GameObjects.Container {
   public body!: Phaser.Physics.Arcade.Body;
@@ -45,6 +46,7 @@ export class Player extends Phaser.GameObjects.Container {
   public ironWall?: Phaser.GameObjects.Rectangle;
   public poisonShotActive = false;
   public iceFieldActive = false;
+  public fireCaprioleActive = false;
 
   // Computed stats
   public moveSpeed: number;
@@ -181,6 +183,7 @@ export class Player extends Phaser.GameObjects.Container {
   getEffectiveKickForce(): number {
     let force = this.kickForce;
     if (this.flameDashActive) force *= 1.5;
+    if (this.fireCaprioleActive) force *= 2;
     if (this.thunderKickReady) force *= 3;
     return force;
   }
@@ -259,6 +262,23 @@ export class Player extends Phaser.GameObjects.Container {
         this.superTimer = this.scene.time.delayedCall(3000, () => {
           this.iceFieldActive = false;
           this.superActive = false;
+        });
+        break;
+
+      case 'fireCapriole':
+        this.fireCaprioleActive = true;
+        this.emitSuperParticles(0xff4400);
+        MusicManager.getInstance().playEffect('/sfx/super_ami.mp3');
+        // 360° rotation tween over 1.5s
+        this.scene.tweens.add({
+          targets: this,
+          angle: 360,
+          duration: 1500,
+          onComplete: () => {
+            this.setAngle(0);
+            this.fireCaprioleActive = false;
+            this.superActive = false;
+          },
         });
         break;
     }

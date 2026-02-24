@@ -53,35 +53,15 @@ export const JERSEY_COLORS: number[] = [
 // ─── Default Appearance for Preset Characters ────────────────
 export function defaultAppearanceForPreset(presetId: number): Appearance {
   const defaults: Record<number, Appearance> = {
-    1: { // BLAZE
-      faceShape: 'diamond', hairStyle: 'spiky', hairColor: 0xc0392b,
-      skinTone: 0xf5c4a1, eyeStyle: 'angry', beard: 'none',
-      jerseyColor1: 0xff4422, jerseyColor2: 0xff8800, jerseyNumber: 7,
+    1: { // CANTER
+      faceShape: 'oval', hairStyle: 'short', hairColor: 0x4a2912,
+      skinTone: 0xe0a877, eyeStyle: 'angry', beard: 'stubble',
+      jerseyColor1: 0xcc2222, jerseyColor2: 0xffffff, jerseyNumber: 7,
     },
-    2: { // TITAN
-      faceShape: 'square', hairStyle: 'buzz', hairColor: 0x2c1b18,
-      skinTone: 0xc68642, eyeStyle: 'angry', beard: 'full',
-      jerseyColor1: 0x4466cc, jerseyColor2: 0xffee00, jerseyNumber: 5,
-    },
-    3: { // SHADOW
-      faceShape: 'oval', hairStyle: 'long', hairColor: 0x2c1b18,
-      skinTone: 0xffe0bd, eyeStyle: 'cool', beard: 'none',
-      jerseyColor1: 0x442266, jerseyColor2: 0xaa44ff, jerseyNumber: 3,
-    },
-    4: { // GUARDIAN
-      faceShape: 'round', hairStyle: 'short', hairColor: 0xd4a540,
-      skinTone: 0xe0a877, eyeStyle: 'normal', beard: 'stubble',
-      jerseyColor1: 0x888888, jerseyColor2: 0x00ccff, jerseyNumber: 1,
-    },
-    5: { // VIPER
-      faceShape: 'triangle', hairStyle: 'mohawk', hairColor: 0x2ecc71,
-      skinTone: 0x8d5524, eyeStyle: 'cool', beard: 'goatee',
-      jerseyColor1: 0x22aa44, jerseyColor2: 0x88ff00, jerseyNumber: 9,
-    },
-    6: { // FROST
-      faceShape: 'oval', hairStyle: 'side', hairColor: 0xffffff,
-      skinTone: 0xffe0bd, eyeStyle: 'happy', beard: 'none',
-      jerseyColor1: 0x44bbdd, jerseyColor2: 0xffffff, jerseyNumber: 11,
+    2: { // ER MANCINO
+      faceShape: 'square', hairStyle: 'short', hairColor: 0x1a1a1a,
+      skinTone: 0xd4a574, eyeStyle: 'cool', beard: 'stubble',
+      jerseyColor1: 0x1a5276, jerseyColor2: 0xffffff, jerseyNumber: 10,
     },
   };
   return defaults[presetId] ?? defaults[1];

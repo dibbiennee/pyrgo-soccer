@@ -56,6 +56,7 @@ export interface PhysicsPlayer {
   ironWallActive: boolean;
   poisonShotActive: boolean;
   iceFieldActive: boolean;
+  fireCaprioleActive: boolean;
 }
 
 export interface PhysicsState {
@@ -93,6 +94,7 @@ export class ServerPhysics {
       ironWallActive: false,
       poisonShotActive: false,
       iceFieldActive: false,
+      fireCaprioleActive: false,
     };
   }
 
@@ -155,7 +157,9 @@ export class ServerPhysics {
 
     // Jump
     if (input.jump && s.jumpsRemaining > 0) {
-      s.vy = s.jumpsRemaining === MAX_JUMPS ? JUMP_VELOCITY : DOUBLE_JUMP_VELOCITY;
+      let jumpVel = s.jumpsRemaining === MAX_JUMPS ? JUMP_VELOCITY : DOUBLE_JUMP_VELOCITY;
+      if (player.fireCaprioleActive) jumpVel *= 1.5;
+      s.vy = jumpVel;
       s.jumpsRemaining--;
     }
 
@@ -190,6 +194,7 @@ export class ServerPhysics {
         player.ghostPhaseActive = false;
         player.ironWallActive = false;
         player.iceFieldActive = false;
+        player.fireCaprioleActive = false;
         s.superActive = false;
       }
     }
@@ -267,6 +272,10 @@ export class ServerPhysics {
         player.iceFieldActive = true;
         player.superTimer = 3000;
         break;
+      case 'fireCapriole':
+        player.fireCaprioleActive = true;
+        player.superTimer = 1500;
+        break;
     }
   }
 
@@ -292,6 +301,21 @@ export class ServerPhysics {
       let force = player.kickForce;
       // Fix #2: Flame Dash kick force 2x → 1.5x (aligns with Player.ts)
       if (player.flameDashActive) force *= 1.5;
+
+      // fireCapriole: 2x force directed toward opponent goal
+      if (player.fireCaprioleActive) {
+        force *= 2;
+        const toGoalDir = s.id === 1 ? 1 : -1;
+        ball.vx = toGoalDir * force;
+        ball.vy = -0.3 * force;
+        player.fireCaprioleActive = false;
+        s.superActive = false;
+        player.superTimer = 0;
+        s.superMeter = Math.min(SUPER_MAX, s.superMeter + SUPER_CHARGE_KICK);
+        state.events.push({ type: 'kick', playerIndex: s.id });
+        return;
+      }
+
       if (player.thunderKickReady) {
         force *= 3;
         ball.gravityIgnored = true;

@@ -13,7 +13,7 @@ import { createButton } from '../ui/ButtonFactory';
 import { LayoutManager } from '../utils/LayoutManager';
 import { THEME, drawGradientBackground } from '../ui/UITheme';
 
-type SelectTab = 'mine' | 'preset' | 'community';
+type SelectTab = 'mine' | 'community';
 
 interface TabEntry {
   gfx: Phaser.GameObjects.Graphics;
@@ -30,7 +30,7 @@ export class CharSelectScene extends Phaser.Scene {
 
   private mode: 'online' | 'cpu' = 'cpu';
   private activePlayer = 1;
-  private activeTab: SelectTab = 'preset';
+  private activeTab: SelectTab = 'community';
   private communityChars: PublishedCharacter[] = [];
 
   private selection1: CharacterRef = { type: 'preset', id: 1 };
@@ -51,9 +51,9 @@ export class CharSelectScene extends Phaser.Scene {
   init(data: { mode?: 'online' | 'cpu' }): void {
     this.mode = data.mode ?? 'cpu';
     this.activePlayer = 1;
-    this.selection1 = { type: 'preset', id: 1 };
-    this.selection2 = { type: 'preset', id: 2 };
-    this.activeTab = CharacterStorage.count() > 0 ? 'mine' : 'preset';
+    this.selection1 = { type: 'preset', id: CHARACTERS[0].id };
+    this.selection2 = { type: 'preset', id: CHARACTERS[1]?.id ?? CHARACTERS[0].id };
+    this.activeTab = CharacterStorage.count() > 0 ? 'mine' : 'community';
   }
 
   create(): void {
@@ -134,7 +134,6 @@ export class CharSelectScene extends Phaser.Scene {
     const L = this.L;
     const tabs: { key: SelectTab; label: string }[] = [
       { key: 'mine', label: 'I MIEI' },
-      { key: 'preset', label: 'PRESET' },
       { key: 'community', label: 'COMMUNITY' },
     ];
 
@@ -216,9 +215,6 @@ export class CharSelectScene extends Phaser.Scene {
     this.gridContainer.removeAll(true);
 
     switch (this.activeTab) {
-      case 'preset':
-        this.buildPresetGrid();
-        break;
       case 'mine':
         this.buildMyCharsGrid();
         break;
@@ -226,22 +222,6 @@ export class CharSelectScene extends Phaser.Scene {
         this.buildCommunityGrid();
         break;
     }
-  }
-
-  private buildPresetGrid(): void {
-    const L = this.L;
-    const count = CHARACTERS.length;
-    const cardS = 100;
-    const gap = 15;
-    const spacing = cardS + gap;
-    const totalW = (count - 1) * spacing;
-    const startX = L.cx - totalW / 2;
-    const y = L.y(0.26);
-
-    CHARACTERS.forEach((char, i) => {
-      const x = startX + i * spacing;
-      this.createCharCard(x, y, char.name, char, { type: 'preset', id: char.id });
-    });
   }
 
   private buildMyCharsGrid(): void {

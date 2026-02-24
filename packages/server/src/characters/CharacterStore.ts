@@ -1,4 +1,5 @@
 import type { CustomCharacterDef } from '@pyrgo/shared';
+import { CHARACTERS } from '@pyrgo/shared';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -20,6 +21,7 @@ export class CharacterStore {
 
   constructor() {
     this.load();
+    this.seedDefaults();
   }
 
   private load(): void {
@@ -93,9 +95,38 @@ export class CharacterStore {
     const idx = this.characters.findIndex(c => c.serverId === serverId && c.creatorDeviceId === authorId);
     if (idx < 0) return false;
 
+    // Protect system-seeded characters from deletion
+    if (this.characters[idx].creatorDeviceId === 'system') return false;
+
     this.characters.splice(idx, 1);
     this.save();
     return true;
+  }
+
+  private seedDefaults(): void {
+    const seeds = CHARACTERS.map((char, i) => ({
+      char,
+      serverId: i === 0 ? 'system_canter' : 'system_er_mancino',
+    }));
+
+    let changed = false;
+    for (const { char, serverId } of seeds) {
+      const exists = this.characters.some(
+        c => c.name === char.name && c.creatorDeviceId === 'system'
+      );
+      if (!exists) {
+        this.characters.push({
+          ...char,
+          appearance: char.appearance!,
+          creatorDeviceId: 'system',
+          isPublic: true,
+          serverId,
+          createdAt: Date.now(),
+        });
+        changed = true;
+      }
+    }
+    if (changed) this.save();
   }
 
   private generateId(): string {

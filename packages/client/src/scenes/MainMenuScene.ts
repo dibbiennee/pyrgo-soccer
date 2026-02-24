@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { LayoutManager } from '../utils/LayoutManager';
 import { SoundManager } from '../audio/SoundManager';
+import { MusicManager } from '../audio/MusicManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { THEME, drawGradientBackground } from '../ui/UITheme';
@@ -8,7 +9,6 @@ import { THEME, drawGradientBackground } from '../ui/UITheme';
 declare const __APP_VERSION__: string;
 
 export class MainMenuScene extends Phaser.Scene {
-  private stopMenuMusic: (() => void) | null = null;
   private settingsElements: Phaser.GameObjects.GameObject[] = [];
   private L!: LayoutManager;
 
@@ -184,7 +184,9 @@ export class MainMenuScene extends Phaser.Scene {
     }).setOrigin(0.5, 1);
 
     // ── Menu music ──────────────────────────────────
-    this.stopMenuMusic = SoundManager.getInstance().menuLoop();
+    const music = MusicManager.getInstance();
+    music.setGameplayMode(false);
+    music.start();
     SoundManager.getInstance().sceneWhoosh();
   }
 
@@ -209,39 +211,58 @@ export class MainMenuScene extends Phaser.Scene {
       sm.enabled = !sm.enabled;
       this.game.registry.set('soundOn', sm.enabled);
       soundBtn.setText(`Sound: ${sm.enabled ? 'ON' : 'OFF'}`);
-      if (sm.enabled) {
-        sm.menuClick();
-        this.stopMenuMusic = sm.menuLoop();
-      } else if (this.stopMenuMusic) {
-        this.stopMenuMusic();
-        this.stopMenuMusic = null;
-      }
+      MusicManager.getInstance().onSoundToggle(sm.enabled);
+      if (sm.enabled) sm.menuClick();
+    });
+
+    // Song picker
+    const musicMgr = MusicManager.getInstance();
+    const songLabel = this.add.text(L.cx, L.y(0.35), musicMgr.getCurrentName(), {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(51);
+
+    const prevSong = this.add.text(L.cx - 140, L.y(0.35), '<', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
+    }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
+    prevSong.on('pointerdown', () => {
+      sm.menuClick();
+      musicMgr.switchTo(musicMgr.getCurrentIndex() - 1);
+      songLabel.setText(musicMgr.getCurrentName());
+    });
+
+    const nextSong = this.add.text(L.cx + 140, L.y(0.35), '>', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
+    }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
+    nextSong.on('pointerdown', () => {
+      sm.menuClick();
+      musicMgr.switchTo(musicMgr.getCurrentIndex() + 1);
+      songLabel.setText(musicMgr.getCurrentName());
     });
 
     // Version display
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
-    const versionText = this.add.text(L.cx, L.y(0.35), `Version: ${version}`, {
+    const versionText = this.add.text(L.cx, L.y(0.42), `Version: ${version}`, {
       fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setDepth(51);
 
     // Reset Data button
     const settingsBtnSize = L.button('normal');
-    const resetBtn = createButton(this, L.cx, L.y(0.44), 'RESET DATA', () => {
+    const resetBtn = createButton(this, L.cx, L.y(0.51), 'RESET DATA', () => {
       this.showResetConfirm();
     }, { width: settingsBtnSize.width, height: settingsBtnSize.height, depth: 52, style: 'danger' });
 
     // Credits button
-    const creditsBtn = createButton(this, L.cx, L.y(0.53), 'CREDITS', () => {
+    const creditsBtn = createButton(this, L.cx, L.y(0.60), 'CREDITS', () => {
       this.destroySettings();
       transitionTo(this, 'Credits');
     }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height, style: 'secondary' });
 
     // Close
-    const closeBtn = createButton(this, L.cx, L.y(0.64), '\u2190 BACK', () => {
+    const closeBtn = createButton(this, L.cx, L.y(0.71), '\u2190 BACK', () => {
       this.destroySettings();
     }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height, style: 'ghost' });
 
-    this.settingsElements = [overlay, titleText, soundBtn, versionText, resetBtn.container, creditsBtn.container, closeBtn.container];
+    this.settingsElements = [overlay, titleText, soundBtn, songLabel, prevSong, nextSong, versionText, resetBtn.container, creditsBtn.container, closeBtn.container];
   }
 
   private showResetConfirm(): void {
@@ -282,9 +303,5 @@ export class MainMenuScene extends Phaser.Scene {
 
   shutdown(): void {
     this.tweens.killAll();
-    if (this.stopMenuMusic) {
-      this.stopMenuMusic();
-      this.stopMenuMusic = null;
-    }
   }
 }

@@ -13,7 +13,8 @@ export type SuperMoveId =
   | 'ghostPhase'
   | 'ironWall'
   | 'poisonShot'
-  | 'iceField';
+  | 'iceField'
+  | 'fireCapriole';
 
 export interface SuperMoveInfo {
   id: SuperMoveId;
@@ -29,6 +30,7 @@ export const SUPER_MOVES: SuperMoveInfo[] = [
   { id: 'ironWall', displayName: 'Shield Blast', description: '3s energy wall blocks everything', color: 0x00ccff },
   { id: 'poisonShot', displayName: 'Tornado', description: 'Ball turns green, next goal counts double', color: 0x88ff00 },
   { id: 'iceField', displayName: 'Meteor', description: '3s icy field, opponent slides', color: 0x88ddff },
+  { id: 'fireCapriole', displayName: 'A Mi', description: 'Fire capriole — 2x kick toward goal, fire trail', color: 0xff4400 },
 ];
 
 export interface CharacterDef {
@@ -53,63 +55,33 @@ export interface CustomCharacterDef extends CharacterDef {
 export const CHARACTERS: CharacterDef[] = [
   {
     id: 1,
-    name: 'BLAZE',
-    stats: { speed: 8, power: 5, defense: 4 },
+    name: 'CANTER',
+    stats: { speed: 7, power: 5, defense: 5 },
     superMove: 'flameDash',
     superDescription: 'Flame Dash — 2s dash at 2x speed, kick at 2x power, fire trail',
-    color: 0xff4422,
-    headColor: 0xff6644,
+    color: 0xcc2222,
+    headColor: 0xe0a877,
     accentColor: 0xff8800,
+    appearance: {
+      faceShape: 'oval', hairStyle: 'short', hairColor: 0x4a2912,
+      skinTone: 0xe0a877, eyeStyle: 'angry', beard: 'stubble',
+      jerseyColor1: 0xcc2222, jerseyColor2: 0xffffff, jerseyNumber: 7,
+    },
   },
   {
     id: 2,
-    name: 'TITAN',
-    stats: { speed: 4, power: 7, defense: 6 },
-    superMove: 'thunderKick',
-    superDescription: 'Thunder Kick — next kick at 3x power, ball ignores gravity for 0.5s',
-    color: 0x4466cc,
-    headColor: 0x5577dd,
-    accentColor: 0xffee00,
-  },
-  {
-    id: 3,
-    name: 'SHADOW',
-    stats: { speed: 9, power: 4, defense: 4 },
-    superMove: 'ghostPhase',
-    superDescription: 'Ghost Phase — 2s intangibility, pass through ball and opponent, then teleport kick',
-    color: 0x442266,
-    headColor: 0x553377,
-    accentColor: 0xaa44ff,
-  },
-  {
-    id: 4,
-    name: 'GUARDIAN',
-    stats: { speed: 3, power: 5, defense: 9 },
-    superMove: 'ironWall',
-    superDescription: 'Iron Wall — 3s energy wall in front of own goal, blocks everything',
-    color: 0x888888,
-    headColor: 0xaaaaaa,
-    accentColor: 0x00ccff,
-  },
-  {
-    id: 5,
-    name: 'VIPER',
-    stats: { speed: 7, power: 6, defense: 4 },
-    superMove: 'poisonShot',
-    superDescription: 'Poison Shot — ball turns green, next goal counts double',
-    color: 0x22aa44,
-    headColor: 0x33bb55,
-    accentColor: 0x88ff00,
-  },
-  {
-    id: 6,
-    name: 'FROST',
-    stats: { speed: 5, power: 6, defense: 6 },
-    superMove: 'iceField',
-    superDescription: 'Ice Field — 3s icy field, opponent slides with low friction',
-    color: 0x44bbdd,
-    headColor: 0x66ddff,
-    accentColor: 0xffffff,
+    name: 'ER MANCINO',
+    stats: { speed: 6, power: 6, defense: 5 },
+    superMove: 'fireCapriole',
+    superDescription: 'A MI — fire capriole, 2x kick toward goal, fire trail 2s',
+    color: 0x1a5276,
+    headColor: 0xd4a574,
+    accentColor: 0xff4400,
+    appearance: {
+      faceShape: 'square', hairStyle: 'short', hairColor: 0x1a1a1a,
+      skinTone: 0xd4a574, eyeStyle: 'cool', beard: 'stubble',
+      jerseyColor1: 0x1a5276, jerseyColor2: 0xffffff, jerseyNumber: 10,
+    },
   },
 ];
 
