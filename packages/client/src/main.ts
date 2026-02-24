@@ -13,8 +13,6 @@ import { CommunityGalleryScene } from './scenes/CommunityGalleryScene';
 import { VsScreen } from './scenes/VsScreen';
 import { HowToPlayScene } from './scenes/HowToPlayScene';
 import { CreditsScene } from './scenes/CreditsScene';
-// RESIZE mode — canvas adapts to any screen size
-
 // ─── Global error handlers ─────────────────────────
 window.onerror = (_msg, _src, _line, _col, _err) => {
   showErrorOverlay();
@@ -78,15 +76,24 @@ SocketManager.getInstance().on('SERVER_SHUTDOWN', () => {
 });
 
 // ─── Phaser game ───────────────────────────────────
+// Read real viewport size and use as design resolution.
+// FIT mode with matching aspect ratio = zero letterbox.
+const MAX_DIM = 1920;
+const rawW = window.innerWidth * window.devicePixelRatio;
+const rawH = window.innerHeight * window.devicePixelRatio;
+const dimScale = Math.min(1, MAX_DIM / Math.max(rawW, rawH));
+const designW = Math.round(rawW * dimScale);
+const designH = Math.round(rawH * dimScale);
+
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: '100%',
-    height: '100%',
+    width: designW,
+    height: designH,
   },
   physics: {
     default: 'arcade',
