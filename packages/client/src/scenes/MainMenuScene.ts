@@ -201,68 +201,79 @@ export class MainMenuScene extends Phaser.Scene {
       fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5).setDepth(51);
 
-    // Sound toggle
+    // SFX toggle
     const sm = SoundManager.getInstance();
-    const soundBtn = this.add.text(L.cx, L.y(0.28), `Sound: ${sm.enabled ? 'ON' : 'OFF'}`, {
+    const soundBtn = this.add.text(L.cx, L.y(0.25), `Effetti: ${sm.enabled ? 'ON' : 'OFF'}`, {
       fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
 
     soundBtn.on('pointerdown', () => {
       sm.enabled = !sm.enabled;
       this.game.registry.set('soundOn', sm.enabled);
-      soundBtn.setText(`Sound: ${sm.enabled ? 'ON' : 'OFF'}`);
-      MusicManager.getInstance().onSoundToggle(sm.enabled);
+      soundBtn.setText(`Effetti: ${sm.enabled ? 'ON' : 'OFF'}`);
+      if (sm.enabled) sm.menuClick();
+    });
+
+    // Music toggle
+    const musicMgr = MusicManager.getInstance();
+    const musicBtn = this.add.text(L.cx, L.y(0.31), `Musica: ${musicMgr.isMusicEnabled() ? 'ON' : 'OFF'}`, {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
+
+    musicBtn.on('pointerdown', () => {
+      const on = !musicMgr.isMusicEnabled();
+      musicMgr.setMusicEnabled(on);
+      musicBtn.setText(`Musica: ${on ? 'ON' : 'OFF'}`);
       if (sm.enabled) sm.menuClick();
     });
 
     // Song picker
-    const musicMgr = MusicManager.getInstance();
-    const songLabel = this.add.text(L.cx, L.y(0.35), musicMgr.getCurrentName(), {
+    const songLabel = this.add.text(L.cx, L.y(0.37), musicMgr.getCurrentName(), {
       fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5).setDepth(51);
 
-    const prevSong = this.add.text(L.cx - 140, L.y(0.35), '<', {
+    const prevSong = this.add.text(L.cx - 140, L.y(0.37), '<', {
       fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
     }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
     prevSong.on('pointerdown', () => {
-      sm.menuClick();
+      if (sm.enabled) sm.menuClick();
       musicMgr.switchTo(musicMgr.getCurrentIndex() - 1);
       songLabel.setText(musicMgr.getCurrentName());
     });
 
-    const nextSong = this.add.text(L.cx + 140, L.y(0.35), '>', {
+    const nextSong = this.add.text(L.cx + 140, L.y(0.37), '>', {
       fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
     }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
     nextSong.on('pointerdown', () => {
-      sm.menuClick();
+      if (sm.enabled) sm.menuClick();
       musicMgr.switchTo(musicMgr.getCurrentIndex() + 1);
       songLabel.setText(musicMgr.getCurrentName());
     });
 
     // Version display
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
-    const versionText = this.add.text(L.cx, L.y(0.42), `Version: ${version}`, {
+    const versionText = this.add.text(L.cx, L.y(0.44), `Version: ${version}`, {
       fontSize: L.fontSize('small'), fontFamily: 'Arial', color: THEME.textSecondary,
     }).setOrigin(0.5).setDepth(51);
 
     // Reset Data button
     const settingsBtnSize = L.button('normal');
-    const resetBtn = createButton(this, L.cx, L.y(0.51), 'RESET DATA', () => {
+    const resetBtn = createButton(this, L.cx, L.y(0.53), 'RESET DATA', () => {
       this.showResetConfirm();
     }, { width: settingsBtnSize.width, height: settingsBtnSize.height, depth: 52, style: 'danger' });
 
     // Credits button
-    const creditsBtn = createButton(this, L.cx, L.y(0.60), 'CREDITS', () => {
+    const creditsBtn = createButton(this, L.cx, L.y(0.62), 'CREDITS', () => {
       this.destroySettings();
       transitionTo(this, 'Credits');
     }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height, style: 'secondary' });
 
     // Close
-    const closeBtn = createButton(this, L.cx, L.y(0.71), '\u2190 BACK', () => {
+    const closeBtn = createButton(this, L.cx, L.y(0.73), '\u2190 BACK', () => {
       this.destroySettings();
     }, { depth: 52, width: settingsBtnSize.width, height: settingsBtnSize.height, style: 'ghost' });
 
-    this.settingsElements = [overlay, titleText, soundBtn, songLabel, prevSong, nextSong, versionText, resetBtn.container, creditsBtn.container, closeBtn.container];
+    this.settingsElements = [overlay, titleText, soundBtn, musicBtn, songLabel, prevSong, nextSong, versionText, resetBtn.container, creditsBtn.container, closeBtn.container];
   }
 
   private showResetConfirm(): void {

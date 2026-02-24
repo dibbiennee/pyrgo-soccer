@@ -12,7 +12,7 @@ const SONG_NAMES = [
   'TUCA TUCADA',
 ];
 
-const BASE_VOLUME = 0.15;
+const BASE_VOLUME = 0.03;
 const GAMEPLAY_VOLUME_RATIO = 0.5; // effective: 0.075 during gameplay
 
 export class MusicManager {
@@ -22,7 +22,8 @@ export class MusicManager {
   private currentIndex = 0;
   private started = false;
   private gameplayMode = false;
-  private enabled = true;
+  private enabled = true;       // global sound
+  private musicEnabled = true;   // music-specific toggle
   private duckInterval: ReturnType<typeof setInterval> | null = null;
 
   static getInstance(): MusicManager {
@@ -52,18 +53,36 @@ export class MusicManager {
     this.updateVolume();
   }
 
-  /** Respond to sound toggle from settings. */
+  /** Respond to global sound toggle from settings. */
   onSoundToggle(soundEnabled: boolean): void {
     this.enabled = soundEnabled;
     if (!this.audio) return;
-    if (soundEnabled) {
+    if (soundEnabled && this.musicEnabled) {
       this.updateVolume();
       if (this.audio.paused && this.started) {
         this.audio.play().catch(() => {});
       }
-    } else {
+    } else if (!soundEnabled) {
       this.audio.pause();
     }
+  }
+
+  /** Toggle music independently (SFX still play). */
+  setMusicEnabled(on: boolean): void {
+    this.musicEnabled = on;
+    if (!this.audio) return;
+    if (on && this.enabled && this.started) {
+      this.updateVolume();
+      if (this.audio.paused) {
+        this.audio.play().catch(() => {});
+      }
+    } else if (!on) {
+      this.audio.pause();
+    }
+  }
+
+  isMusicEnabled(): boolean {
+    return this.musicEnabled;
   }
 
   /** Pause background music (e.g. for victory jingle). */
@@ -75,7 +94,7 @@ export class MusicManager {
 
   /** Resume background music after a pause. */
   resume(): void {
-    if (this.audio && this.audio.paused && this.enabled && this.started) {
+    if (this.audio && this.audio.paused && this.enabled && this.musicEnabled && this.started) {
       this.updateVolume();
       this.audio.play().catch(() => {});
     }
@@ -111,7 +130,7 @@ export class MusicManager {
     this.updateVolume();
     this.audio.addEventListener('ended', this.onEnded);
 
-    if (this.enabled) {
+    if (this.enabled && this.musicEnabled) {
       this.audio.play().catch(() => {});
     }
   }

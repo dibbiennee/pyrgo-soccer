@@ -121,6 +121,10 @@ export class LocalGameScene extends Phaser.Scene {
   // Goal slow-mo
   private goalSlowMoActive = false;
 
+  // Pause
+  private paused = false;
+  private pauseElements: Phaser.GameObjects.GameObject[] = [];
+
   constructor(key = 'LocalGame') {
     super(key);
   }
@@ -154,6 +158,8 @@ export class LocalGameScene extends Phaser.Scene {
     this.p1WasInAir = false;
     this.p2WasInAir = false;
     this.goalSlowMoActive = false;
+    this.paused = false;
+    this.pauseElements = [];
   }
 
   create(): void {
@@ -633,6 +639,17 @@ export class LocalGameScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5).setDepth(100);
+
+    // Pause button (top-left)
+    const pauseBtn = this.add.text(30, hudTop + 4, '\u23F8', {
+      fontSize: '28px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(10);
+    pauseBtn.on('pointerdown', () => {
+      if (!this.paused && this.phase === 'playing' && !this.frozen) {
+        this.togglePause();
+      }
+    });
   }
 
   protected createTouchControls(): void {
@@ -678,7 +695,7 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
-    if (this.matchOver) return;
+    if (this.matchOver || this.paused) return;
 
     // Update ball trail / rotation / afterimages
     this.ball.update(time, delta);
@@ -1472,6 +1489,116 @@ export class LocalGameScene extends Phaser.Scene {
     }
   }
 
+  // ═══════════════════════════════════════════════════
+  // PAUSE MENU
+  // ═══════════════════════════════════════════════════
+  private togglePause(): void {
+    if (this.paused) {
+      this.resumeGame();
+    } else {
+      this.pauseGame();
+    }
+  }
+
+  private pauseGame(): void {
+    this.paused = true;
+    this.physics.pause();
+
+    const D = 300; // depth for pause UI
+    const cx = GAME_WIDTH / 2;
+    const sm = SoundManager.getInstance();
+    const musicMgr = MusicManager.getInstance();
+
+    // Dark overlay
+    const overlay = this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.8)
+      .setDepth(D).setInteractive();
+
+    const title = this.add.text(cx, 70, 'PAUSA', {
+      fontSize: '36px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(D + 1);
+
+    // SFX toggle
+    const sfxBtn = this.add.text(cx, 130, `Effetti: ${sm.enabled ? 'ON' : 'OFF'}`, {
+      fontSize: '18px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    sfxBtn.on('pointerdown', () => {
+      sm.enabled = !sm.enabled;
+      this.game.registry.set('soundOn', sm.enabled);
+      sfxBtn.setText(`Effetti: ${sm.enabled ? 'ON' : 'OFF'}`);
+      if (sm.enabled) sm.menuClick();
+    });
+
+    // Music toggle
+    const musicBtn = this.add.text(cx, 170, `Musica: ${musicMgr.isMusicEnabled() ? 'ON' : 'OFF'}`, {
+      fontSize: '18px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    musicBtn.on('pointerdown', () => {
+      const on = !musicMgr.isMusicEnabled();
+      musicMgr.setMusicEnabled(on);
+      musicBtn.setText(`Musica: ${on ? 'ON' : 'OFF'}`);
+      if (sm.enabled) sm.menuClick();
+    });
+
+    // Song picker
+    const songLabel = this.add.text(cx, 215, musicMgr.getCurrentName(), {
+      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1);
+
+    const prevSong = this.add.text(cx - 110, 215, '<', {
+      fontSize: '20px', fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    prevSong.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      musicMgr.switchTo(musicMgr.getCurrentIndex() - 1);
+      songLabel.setText(musicMgr.getCurrentName());
+    });
+
+    const nextSong = this.add.text(cx + 110, 215, '>', {
+      fontSize: '20px', fontFamily: 'Arial Black, Arial', color: THEME.primaryHex,
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    nextSong.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      musicMgr.switchTo(musicMgr.getCurrentIndex() + 1);
+      songLabel.setText(musicMgr.getCurrentName());
+    });
+
+    // Resume button
+    const resumeBtn = this.add.text(cx, 290, '\u25B6  RIPRENDI', {
+      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: THEME.successHex,
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    resumeBtn.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      this.resumeGame();
+    });
+
+    // Exit button
+    const exitBtn = this.add.text(cx, 345, 'ESCI', {
+      fontSize: '20px', fontFamily: 'Arial', color: THEME.dangerHex,
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(D + 1).setInteractive({ useHandCursor: true });
+    exitBtn.on('pointerdown', () => {
+      if (sm.enabled) sm.menuClick();
+      this.resumeGame();
+      transitionTo(this, 'MainMenu');
+    });
+
+    this.pauseElements = [overlay, title, sfxBtn, musicBtn, songLabel, prevSong, nextSong, resumeBtn, exitBtn];
+  }
+
+  private resumeGame(): void {
+    this.pauseElements.forEach(e => e.destroy());
+    this.pauseElements = [];
+    this.paused = false;
+    this.physics.resume();
+  }
+
   shutdown(): void {
     // Restore music volume
     MusicManager.getInstance().setGameplayMode(false);
@@ -1504,6 +1631,11 @@ export class LocalGameScene extends Phaser.Scene {
     // Destroy touch controls
     this.touchControls?.destroy();
     this.touchControls = undefined;
+
+    // Clean up pause
+    this.pauseElements.forEach(e => e.destroy());
+    this.pauseElements = [];
+    this.paused = false;
 
     // Resume physics if paused
     if (this.physics.world?.isPaused) {
