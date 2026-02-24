@@ -6,9 +6,10 @@ import { SocketManager } from '../network/SocketManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 
 export class OnlineHubScene extends Phaser.Scene {
+  private L!: LayoutManager;
   private socket!: SocketManager;
   private charRef: CharacterRef = { type: 'preset', id: 1 };
   private inputChars: string[] = [];
@@ -33,54 +34,55 @@ export class OnlineHubScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const cx = W / 2;
+    const L = new LayoutManager(this);
+    this.L = L;
 
     const sm = SoundManager.getInstance();
     sm.enabled = this.game.registry.get('soundOn') !== false;
 
-    this.add.rectangle(cx, H / 2, W, H, 0x1a1a2e);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
-    this.add.text(cx, 25, 'ONLINE MATCH', {
-      fontSize: '32px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.04), 'ONLINE MATCH', {
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Mini character preview
     const char = resolveCharacter(this.charRef);
     const appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
-    CharacterRenderer.renderMiniPreview(this, appearance, cx, 100, 0.8);
-    this.add.text(cx, 140, char.name, {
-      fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
+    CharacterRenderer.renderMiniPreview(this, appearance, L.cx, L.y(0.14), L.unit(0.002));
+    this.add.text(L.cx, L.y(0.19), char.name, {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#aaaacc',
     }).setOrigin(0.5);
 
     // Status text
-    this.statusText = this.add.text(cx, 170, '', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffaa00',
+    this.statusText = this.add.text(L.cx, L.y(0.23), '', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 
-    // ─── CREATE ROOM section ──────────────────────────
-    const leftX = W / 4;
-    createButton(this, leftX, 230, 'CREA STANZA', () => this.doCreateRoom(), {
-      width: 220, height: 42, fillColor: 0x00aa44, strokeColor: 0x00ff66,
+    // --- CREATE ROOM section ---
+    const leftX = L.x(0.25);
+    const btnNormal = L.button('normal');
+    createButton(this, leftX, L.y(0.32), 'CREA STANZA', () => this.doCreateRoom(), {
+      width: btnNormal.width, height: btnNormal.height, fillColor: 0x00aa44, strokeColor: 0x00ff66,
     });
 
     // Room code display (shown after creation)
-    this.roomCodeDisplay = this.add.text(leftX, 310, '', {
-      fontSize: '64px', fontFamily: 'Courier New, monospace', color: '#00ccff',
+    this.roomCodeDisplay = this.add.text(leftX, L.y(0.42), '', {
+      fontSize: L.unit(0.14) + 'px', fontFamily: 'Courier New, monospace', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5).setVisible(false);
 
     // Copy button
-    this.copyBtn = createButton(this, leftX, 380, 'COPIA CODICE', () => this.copyRoomCode(), {
-      width: 200, height: 36, fontSize: '14px', fillColor: 0x225588, strokeColor: 0x44aaff,
+    const btnSmall = L.button('small');
+    this.copyBtn = createButton(this, leftX, L.y(0.52), 'COPIA CODICE', () => this.copyRoomCode(), {
+      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), fillColor: 0x225588, strokeColor: 0x44aaff,
     });
     this.copyBtn.container.setVisible(false);
 
     // Waiting text
-    this.waitingText = this.add.text(leftX, 430, 'Waiting for opponent...', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#aaaacc',
+    this.waitingText = this.add.text(leftX, L.y(0.60), 'Waiting for opponent...', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#aaaacc',
     }).setOrigin(0.5).setVisible(false);
     this.tweens.add({
       targets: this.waitingText,
@@ -89,7 +91,7 @@ export class OnlineHubScene extends Phaser.Scene {
     });
 
     // Cancel button
-    this.cancelBtn = createButton(this, leftX, 485, 'CANCEL', () => {
+    this.cancelBtn = createButton(this, leftX, L.y(0.68), 'CANCEL', () => {
       this.socket.emit('ROOM_LEAVE', {});
       this.socket.disconnect();
       this.state = 'idle';
@@ -98,55 +100,59 @@ export class OnlineHubScene extends Phaser.Scene {
       this.waitingText?.setVisible(false);
       this.cancelBtn?.container.setVisible(false);
       this.statusText?.setText('').setColor('#ffaa00');
-    }, { width: 160, height: 36, fontSize: '14px', fillColor: 0x994444, strokeColor: 0xff4444 });
+    }, { width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), fillColor: 0x994444, strokeColor: 0xff4444 });
     this.cancelBtn.container.setVisible(false);
 
-    // ─── JOIN ROOM section ────────────────────────────
-    const rightX = (W * 3) / 4;
-    this.add.text(rightX, 215, 'Enter Room Code:', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
+    // --- JOIN ROOM section ---
+    const rightX = L.x(0.75);
+    this.add.text(rightX, L.y(0.30), 'Enter Room Code:', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
 
-    this.roomCodeText = this.add.text(rightX, 260, '____', {
-      fontSize: '40px', fontFamily: 'Courier New, monospace', color: '#00ccff',
+    this.roomCodeText = this.add.text(rightX, L.y(0.36), '____', {
+      fontSize: L.unit(0.09) + 'px', fontFamily: 'Courier New, monospace', color: '#00ccff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
 
     // Virtual keyboard
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const cols = 9;
-    const kbStartX = rightX - (cols - 1) * 36 / 2;
+    const keySize = L.unit(0.065);
+    const keyGap = keySize * 1.2;
+    const kbStartX = rightX - (cols - 1) * keyGap / 2;
+    const kbStartY = L.y(0.44);
     for (let i = 0; i < letters.length; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
-      const x = kbStartX + col * 36;
-      const y = 310 + row * 40;
-      this.createKeyButton(x, y, letters[i]);
+      const x = kbStartX + col * keyGap;
+      const y = kbStartY + row * keyGap;
+      this.createKeyButton(x, y, letters[i], keySize);
     }
 
-    // Delete button
-    createButton(this, rightX - 80, 510, 'DEL', () => {
+    // DEL button
+    const kbBottomY = kbStartY + Math.ceil(letters.length / cols) * keyGap;
+    createButton(this, rightX - L.unit(0.08), kbBottomY, 'DEL', () => {
       this.inputChars.pop();
       this.updateRoomCodeInput();
-    }, { width: 70, height: 36, fontSize: '14px' });
+    }, { width: btnSmall.width * 0.7, height: btnSmall.height, fontSize: L.fontSize('small') });
 
-    // Join button
-    this.joinBtn = createButton(this, rightX + 80, 510, 'JOIN', () => {
+    // JOIN button
+    this.joinBtn = createButton(this, rightX + L.unit(0.08), kbBottomY, 'JOIN', () => {
       if (this.inputChars.length === 4) {
         this.doJoinRoom(this.inputChars.join(''));
       }
-    }, { width: 90, height: 36, fontSize: '14px', fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+    }, { width: btnSmall.width * 0.8, height: btnSmall.height, fontSize: L.fontSize('small'), fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 
     // Divider line
     const divider = this.add.graphics();
     divider.lineStyle(1, 0x444466, 0.5);
-    divider.lineBetween(cx, 195, cx, 560);
+    divider.lineBetween(L.cx, L.y(0.27), L.cx, L.y(0.78));
 
     // Back button
-    createButton(this, 80, H - 30, '\u2190 BACK', () => {
+    createButton(this, L.x(0.08), L.y(0.94), '\u2190 BACK', () => {
       this.cleanup();
       transitionTo(this, 'CharSelect', { mode: 'online' });
-    }, { width: 110, height: 36, fontSize: '14px', strokeColor: 0x666666 });
+    }, { width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666 });
 
     // Keyboard input
     if (this.input.keyboard) {
@@ -252,13 +258,13 @@ export class OnlineHubScene extends Phaser.Scene {
     this.roomCodeText?.setText(display);
   }
 
-  private createKeyButton(x: number, y: number, letter: string): void {
-    const bg = this.add.rectangle(x, y, 30, 32, 0x2a2a4e);
+  private createKeyButton(x: number, y: number, letter: string, keySize: number): void {
+    const bg = this.add.rectangle(x, y, keySize, keySize, 0x2a2a4e);
     bg.setStrokeStyle(1, 0x444466);
     bg.setInteractive({ useHandCursor: true });
 
     this.add.text(x, y, letter, {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
+      fontSize: this.L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
 
     bg.on('pointerdown', () => {

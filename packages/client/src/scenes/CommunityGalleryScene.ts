@@ -6,11 +6,12 @@ import { CharacterApi, type PublishedCharacter } from '../api/CharacterApi';
 import { getDeviceId } from '../storage/DeviceId';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 
 const CARDS_PER_PAGE = 6;
 
 export class CommunityGalleryScene extends Phaser.Scene {
+  private L!: LayoutManager;
   private characters: PublishedCharacter[] = [];
   private page = 0;
   private loading = true;
@@ -26,23 +27,22 @@ export class CommunityGalleryScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const cx = W / 2;
+    const L = new LayoutManager(this);
+    this.L = L;
     this.page = 0;
     this.selectedChar = null;
 
-    this.add.rectangle(cx, H / 2, W, H, 0x0d0d1a);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
 
     // Title
-    this.add.text(cx, 25, 'COMMUNITY PLAYERS', {
-      fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.04), 'COMMUNITY PLAYERS', {
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
 
     // Status text (loading / error)
-    this.statusText = this.add.text(cx, 280, 'Loading...', {
-      fontSize: '18px', fontFamily: 'Arial', color: '#888899',
+    this.statusText = this.add.text(L.cx, L.cy, 'Loading...', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5);
 
     // Grid container
@@ -52,24 +52,26 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.detailContainer = this.add.container(0, 0);
 
     // Page navigation
-    const pageY = H - 65;
-    this.pageText = this.add.text(cx, pageY, '', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#888899',
+    const pageY = L.y(0.88);
+    this.pageText = this.add.text(L.cx, pageY, '', {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5);
 
-    const prevBg = this.add.rectangle(cx - 80, pageY, 50, 30, 0x333355);
+    const navBtnW = L.unit(0.06);
+    const navBtnH = L.unit(0.04);
+    const prevBg = this.add.rectangle(L.cx - L.unit(0.10), pageY, navBtnW, navBtnH, 0x333355);
     prevBg.setInteractive({ useHandCursor: true });
-    this.add.text(cx - 80, pageY, '<', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
+    this.add.text(L.cx - L.unit(0.10), pageY, '<', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     prevBg.on('pointerdown', () => {
       if (this.page > 0) { this.page--; this.showGrid(); }
     });
 
-    const nextBg = this.add.rectangle(cx + 80, pageY, 50, 30, 0x333355);
+    const nextBg = this.add.rectangle(L.cx + L.unit(0.10), pageY, navBtnW, navBtnH, 0x333355);
     nextBg.setInteractive({ useHandCursor: true });
-    this.add.text(cx + 80, pageY, '>', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
+    this.add.text(L.cx + L.unit(0.10), pageY, '>', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     nextBg.on('pointerdown', () => {
       const maxPage = Math.max(0, Math.ceil(this.characters.length / CARDS_PER_PAGE) - 1);
@@ -77,8 +79,9 @@ export class CommunityGalleryScene extends Phaser.Scene {
     });
 
     // Back button
-    createButton(this, 80, H - 30, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
-      width: 110, height: 36, fontSize: '14px', strokeColor: 0x666666,
+    const btnSmall = L.button('small');
+    createButton(this, L.x(0.08), L.y(0.95), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666,
     });
 
     // Fetch characters
@@ -87,21 +90,25 @@ export class CommunityGalleryScene extends Phaser.Scene {
 
   private showSkeletonLoading(): void {
     this.gridContainer.removeAll(true);
-    const spacing = 180;
+    const L = this.L;
+    const cardSize = L.cardSize();
+    const cardGap = L.cardGap();
+    const spacing = cardSize + cardGap;
     const totalW = 5 * spacing;
-    const startX = CANVAS_W / 2 - totalW / 2;
-    const y = 180;
+    const startX = L.cx - totalW / 2;
+    const y = L.y(0.28);
 
     for (let i = 0; i < 6; i++) {
       const x = startX + i * spacing;
       const container = this.add.container(x, y);
       this.gridContainer.add(container);
 
-      const bg = this.add.rectangle(0, 0, 120, 110, 0x222244, 0.6);
+      const cardH = cardSize * 0.92;
+      const bg = this.add.rectangle(0, 0, cardSize, cardH, 0x222244, 0.6);
       bg.setStrokeStyle(1, 0x333355);
       container.add(bg);
 
-      const shimmer = this.add.rectangle(0, 0, 120, 110, 0x333366, 0);
+      const shimmer = this.add.rectangle(0, 0, cardSize, cardH, 0x333366, 0);
       container.add(shimmer);
       this.tweens.add({
         targets: shimmer,
@@ -110,11 +117,12 @@ export class CommunityGalleryScene extends Phaser.Scene {
         ease: 'Sine.easeInOut', delay: i * 100,
       });
 
-      const head = this.add.arc(0, -18, 12, 0, 360, false, 0x333355, 0.5);
+      const headR = cardSize * 0.1;
+      const head = this.add.arc(0, -cardSize * 0.15, headR, 0, 360, false, 0x333355, 0.5);
       container.add(head);
-      const body = this.add.rectangle(0, 6, 24, 30, 0x333355, 0.5);
+      const body = this.add.rectangle(0, cardSize * 0.05, headR * 2, cardSize * 0.25, 0x333355, 0.5);
       container.add(body);
-      const nameBar = this.add.rectangle(0, 40, 60, 10, 0x333355, 0.5);
+      const nameBar = this.add.rectangle(0, cardSize * 0.33, cardSize * 0.5, cardSize * 0.08, 0x333355, 0.5);
       container.add(nameBar);
     }
   }
@@ -142,37 +150,42 @@ export class CommunityGalleryScene extends Phaser.Scene {
     this.detailContainer.removeAll(true);
     this.selectedChar = null;
 
+    const L = this.L;
     const startIdx = this.page * CARDS_PER_PAGE;
     const pageChars = this.characters.slice(startIdx, startIdx + CARDS_PER_PAGE);
     const totalPages = Math.max(1, Math.ceil(this.characters.length / CARDS_PER_PAGE));
     this.pageText.setText(`Page ${this.page + 1} / ${totalPages}`);
 
-    const spacing = 180;
+    const cardSize = L.cardSize();
+    const cardGap = L.cardGap();
+    const spacing = cardSize + cardGap;
     const totalW = (Math.min(pageChars.length, 6) - 1) * spacing;
-    const startX = CANVAS_W / 2 - totalW / 2;
-    const y = 180;
+    const startX = L.cx - totalW / 2;
+    const y = L.y(0.28);
 
     pageChars.forEach((char, i) => {
       const x = startX + (i % 6) * spacing;
-      this.createCharCard(x, y, char);
+      this.createCharCard(x, y, char, cardSize);
     });
   }
 
-  private createCharCard(x: number, y: number, char: PublishedCharacter): void {
+  private createCharCard(x: number, y: number, char: PublishedCharacter, cardSize: number): void {
     const container = this.add.container(x, y);
     this.gridContainer.add(container);
 
-    const bg = this.add.rectangle(0, 0, 120, 110, 0x2a2a4e);
+    const cardH = cardSize * 0.92;
+    const bg = this.add.rectangle(0, 0, cardSize, cardH, 0x2a2a4e);
     bg.setStrokeStyle(2, 0x444466);
     bg.setInteractive({ useHandCursor: true });
     container.add(bg);
 
     const appearance: Appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
-    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -12, 0.6);
+    const previewScale = cardSize / 200;
+    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -cardSize * 0.1, previewScale);
     container.add(preview);
 
-    const name = this.add.text(0, 40, char.name, {
-      fontSize: '12px', fontFamily: 'Arial', color: '#cccccc',
+    const name = this.add.text(0, cardSize * 0.33, char.name, {
+      fontSize: this.L.fontSize('tiny'), fontFamily: 'Arial', color: '#cccccc',
     }).setOrigin(0.5);
     container.add(name);
 
@@ -184,46 +197,50 @@ export class CommunityGalleryScene extends Phaser.Scene {
   private showDetail(char: PublishedCharacter): void {
     this.detailContainer.removeAll(true);
     this.selectedChar = char;
-    const cx = CANVAS_W / 2;
-    const startY = 340;
+    const L = this.L;
+    const startY = L.y(0.55);
 
-    const nameText = this.add.text(cx, startY, char.name, {
-      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    const nameText = this.add.text(L.cx, startY, char.name, {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
     this.detailContainer.add(nameText);
 
     const bar = (val: number) => '\u2588'.repeat(val) + '\u2591'.repeat(10 - val);
-    const statsY = startY + 35;
-    const statsX = cx - 160;
+    const statsY = startY + L.unit(0.05);
+    const statsX = L.cx - L.unit(0.20);
     const stats = [
       `SPD ${bar(char.stats.speed)} ${char.stats.speed}`,
       `PWR ${bar(char.stats.power)} ${char.stats.power}`,
       `DEF ${bar(char.stats.defense)} ${char.stats.defense}`,
     ];
     stats.forEach((s, i) => {
-      const t = this.add.text(statsX, statsY + i * 22, s, {
-        fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
+      const t = this.add.text(statsX, statsY + i * L.unit(0.03), s, {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#aaaacc',
       });
       this.detailContainer.add(t);
     });
 
     const superInfo = SUPER_MOVES.find(m => m.id === char.superMove);
     if (superInfo) {
-      const superText = this.add.text(cx, statsY + 80, `Super: ${superInfo.displayName} \u2014 ${superInfo.description}`, {
-        fontSize: '14px', fontFamily: 'Arial', color: '#888899',
-        wordWrap: { width: 500 },
+      const superText = this.add.text(L.cx, statsY + L.unit(0.11), `Super: ${superInfo.displayName} \u2014 ${superInfo.description}`, {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#888899',
+        wordWrap: { width: L.w * 0.5 },
       }).setOrigin(0.5);
       this.detailContainer.add(superText);
     }
 
     const isOwner = char.creatorDeviceId === getDeviceId();
     if (isOwner) {
-      const toggleBg = this.add.rectangle(cx - 80, statsY + 120, 130, 32, 0x442266);
+      const ownerBtnW = L.unit(0.16);
+      const ownerBtnH = L.unit(0.04);
+      const ownerBtnY = statsY + L.unit(0.16);
+
+      const toggleBg = this.add.rectangle(L.cx - L.unit(0.10), ownerBtnY, ownerBtnW, ownerBtnH, 0x442266);
       toggleBg.setStrokeStyle(1, 0x8844cc);
       toggleBg.setInteractive({ useHandCursor: true });
-      const toggleText = this.add.text(cx - 80, statsY + 120, 'MAKE PRIVATE', {
-        fontSize: '12px', fontFamily: 'Arial', color: '#ffffff',
+      const toggleText = this.add.text(L.cx - L.unit(0.10), ownerBtnY, 'MAKE PRIVATE', {
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffffff',
       }).setOrigin(0.5);
       this.detailContainer.add(toggleBg);
       this.detailContainer.add(toggleText);
@@ -233,11 +250,11 @@ export class CommunityGalleryScene extends Phaser.Scene {
         this.fetchCharacters();
       });
 
-      const delBg = this.add.rectangle(cx + 80, statsY + 120, 100, 32, 0x664444);
+      const delBg = this.add.rectangle(L.cx + L.unit(0.10), ownerBtnY, ownerBtnW * 0.75, ownerBtnH, 0x664444);
       delBg.setStrokeStyle(1, 0x884444);
       delBg.setInteractive({ useHandCursor: true });
-      const delText = this.add.text(cx + 80, statsY + 120, 'DELETE', {
-        fontSize: '12px', fontFamily: 'Arial', color: '#ff4444',
+      const delText = this.add.text(L.cx + L.unit(0.10), ownerBtnY, 'DELETE', {
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ff4444',
       }).setOrigin(0.5);
       this.detailContainer.add(delBg);
       this.detailContainer.add(delText);

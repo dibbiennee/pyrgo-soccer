@@ -9,9 +9,10 @@ import { SocketManager } from '../network/SocketManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 
 export class OnlineLobbyScene extends Phaser.Scene {
+  private L!: LayoutManager;
   private socket!: SocketManager;
   private players: LobbyPlayerInfo[] = [];
   private myIndex = 1;
@@ -42,30 +43,29 @@ export class OnlineLobbyScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const cx = W / 2;
+    const L = new LayoutManager(this);
+    this.L = L;
 
     const sm = SoundManager.getInstance();
     sm.enabled = this.game.registry.get('soundOn') !== false;
 
-    this.add.rectangle(cx, H / 2, W, H, 0x1a1a2e);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
     // Title
-    this.add.text(cx, 25, 'MATCH LOBBY', {
-      fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.04), 'MATCH LOBBY', {
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Room code
-    this.add.text(cx, 55, `Room: ${this.roomCode}`, {
-      fontSize: '14px', fontFamily: 'Courier New, monospace', color: '#666688',
+    this.add.text(L.cx, L.y(0.08), `Room: ${this.roomCode}`, {
+      fontSize: L.fontSize('small'), fontFamily: 'Courier New, monospace', color: '#666688',
     }).setOrigin(0.5);
 
-    // ─── Player displays ──────────────────────────────
-    const p1X = W * 0.25;
-    const p2X = W * 0.75;
-    const charY = 260;
+    // --- Player displays ---
+    const p1X = L.x(0.25);
+    const p2X = L.x(0.75);
+    const charY = L.y(0.38);
 
     for (let idx = 0; idx < 2; idx++) {
       const playerInfo = this.players.find(p => p.playerIndex === idx + 1);
@@ -76,41 +76,41 @@ export class OnlineLobbyScene extends Phaser.Scene {
         const char = resolveCharacter(playerInfo.charRef);
         const appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
 
-        CharacterRenderer.renderMiniPreview(this, appearance, px, charY, 1.8);
+        CharacterRenderer.renderMiniPreview(this, appearance, px, charY, L.unit(0.004));
 
-        this.add.text(px, charY + 80, char.name, {
-          fontSize: '20px', fontFamily: 'Arial Black, Arial', color,
+        this.add.text(px, charY + L.unit(0.10), char.name, {
+          fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color,
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5);
 
-        this.add.text(px, charY + 108, playerInfo.playerName, {
-          fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
+        this.add.text(px, charY + L.unit(0.14), playerInfo.playerName, {
+          fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#aaaacc',
         }).setOrigin(0.5);
 
         // Stats bars
-        const statsY = charY + 130;
+        const statsY = charY + L.unit(0.17);
         const bar = (val: number) => '\u2588'.repeat(val) + '\u2591'.repeat(10 - val);
         this.add.text(px, statsY, `SPD ${bar(char.stats.speed)}`, {
-          fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
+          fontSize: L.fontSize('tiny'), fontFamily: 'Courier New, monospace', color: '#aaaaaa',
         }).setOrigin(0.5);
-        this.add.text(px, statsY + 18, `PWR ${bar(char.stats.power)}`, {
-          fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
+        this.add.text(px, statsY + L.unit(0.025), `PWR ${bar(char.stats.power)}`, {
+          fontSize: L.fontSize('tiny'), fontFamily: 'Courier New, monospace', color: '#aaaaaa',
         }).setOrigin(0.5);
-        this.add.text(px, statsY + 36, `DEF ${bar(char.stats.defense)}`, {
-          fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
+        this.add.text(px, statsY + L.unit(0.05), `DEF ${bar(char.stats.defense)}`, {
+          fontSize: L.fontSize('tiny'), fontFamily: 'Courier New, monospace', color: '#aaaaaa',
         }).setOrigin(0.5);
 
         // Super move info
         const superInfo = SUPER_MOVES.find(m => m.id === char.superMove);
         if (superInfo) {
-          this.add.text(px, statsY + 62, `Super: ${superInfo.displayName}`, {
-            fontSize: '14px', fontFamily: 'Arial', color: '#ffaa00',
+          this.add.text(px, statsY + L.unit(0.08), `Super: ${superInfo.displayName}`, {
+            fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
           }).setOrigin(0.5);
         }
 
         // Ready indicator
-        const readyText = this.add.text(px, charY - 70, '', {
-          fontSize: '22px', fontFamily: 'Arial', color: '#00ff66',
+        const readyText = this.add.text(px, charY - L.unit(0.14), '', {
+          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#00ff66',
         }).setOrigin(0.5);
         this.readyIndicators[idx] = readyText;
 
@@ -119,40 +119,42 @@ export class OnlineLobbyScene extends Phaser.Scene {
         }
       } else {
         this.add.text(px, charY, '?', {
-          fontSize: '52px', fontFamily: 'Arial', color: '#444466',
+          fontSize: L.fontSize('title'), fontFamily: 'Arial', color: '#444466',
         }).setOrigin(0.5);
-        this.add.text(px, charY + 60, 'Waiting...', {
-          fontSize: '16px', fontFamily: 'Arial', color: '#666688',
+        this.add.text(px, charY + L.unit(0.08), 'Waiting...', {
+          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#666688',
         }).setOrigin(0.5);
       }
     }
 
     // VS text
-    this.add.text(cx, charY, 'VS', {
-      fontSize: '52px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    this.add.text(L.cx, charY, 'VS', {
+      fontSize: L.fontSize('title'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 6,
     }).setOrigin(0.5).setAlpha(0.5);
 
-    // ─── READY button ─────────────────────────────────
-    this.readyBtn = createButton(this, cx, H - 60, 'PRONTO', () => {
+    // --- READY button ---
+    const btnLarge = L.button('large');
+    this.readyBtn = createButton(this, L.cx, L.y(0.90), 'PRONTO', () => {
       if (this.imReady) return;
       this.imReady = true;
       sm.menuClick();
       this.socket.emit('PLAYER_READY', {});
       this.readyBtn!.label.setText('WAITING...');
       this.readyBtn!.bg.setFillStyle(0x444466);
-    }, { width: 220, height: 48, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+    }, { width: btnLarge.width, height: btnLarge.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 
-    // Back button
-    createButton(this, 80, H - 30, '\u2190 LEAVE', () => {
+    // Leave button
+    const btnSmall = L.button('small');
+    createButton(this, L.x(0.08), L.y(0.95), '\u2190 LEAVE', () => {
       this.socket.emit('ROOM_LEAVE', {});
       this.cleanup();
       transitionTo(this, 'OnlineHub', { charRef: this.charRef });
-    }, { width: 120, height: 36, fontSize: '14px', strokeColor: 0x666666 });
+    }, { width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('small'), strokeColor: 0x666666 });
 
     // Countdown text (hidden initially)
-    this.countdownText = this.add.text(cx, H / 2, '', {
-      fontSize: '80px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    this.countdownText = this.add.text(L.cx, L.cy, '', {
+      fontSize: L.unit(0.18) + 'px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 8,
     }).setOrigin(0.5).setDepth(100).setVisible(false);
 

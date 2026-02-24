@@ -1,16 +1,18 @@
 import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
 
-/** Design resolution for the Phaser canvas */
-export const CANVAS_W = 1280;
-export const CANVAS_H = 800;
-
 /**
  * Sets up camera zoom for game scenes (LocalGame, CpuGame, OnlineGame).
- * Scales the 800×480 physics world to fill the 1280×800 canvas.
- * zoom = min(1280/800, 800/480) = 1.6
+ * Dynamically scales the 800×480 physics world to fill the current screen.
+ * Also listens for resize events to re-zoom.
  */
 export function setupGameCamera(scene: Phaser.Scene): void {
-  const zoom = Math.min(CANVAS_W / GAME_WIDTH, CANVAS_H / GAME_HEIGHT);
-  scene.cameras.main.setZoom(zoom);
-  scene.cameras.main.centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+  const apply = () => {
+    const sw = scene.scale.width;
+    const sh = scene.scale.height;
+    const zoom = Math.min(sw / GAME_WIDTH, sh / GAME_HEIGHT);
+    scene.cameras.main.setZoom(zoom);
+    scene.cameras.main.centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+  };
+  apply();
+  scene.scale.on('resize', apply);
 }

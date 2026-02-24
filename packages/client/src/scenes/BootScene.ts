@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 import { SoundManager } from '../audio/SoundManager';
 
 export class BootScene extends Phaser.Scene {
@@ -8,15 +8,14 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const cx = CANVAS_W / 2;
-    const cy = CANVAS_H / 2;
+    const L = new LayoutManager(this);
 
     // Background
-    this.add.rectangle(cx, cy, CANVAS_W, CANVAS_H, 0x0d0d1a);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
 
     // Logo "PYRGO SOCCER" above the loading bar
-    const logo = this.add.text(cx, cy - 80, 'PYRGO SOCCER', {
-      fontSize: '40px',
+    const logo = this.add.text(L.cx, L.cy - L.unit(0.15), 'PYRGO SOCCER', {
+      fontSize: L.fontSize('title'),
       fontFamily: 'Arial Black, Arial',
       color: '#00ccff',
       stroke: '#000000',
@@ -34,22 +33,35 @@ export class BootScene extends Phaser.Scene {
     });
 
     // Progress bar
+    const barWidth = L.w * 0.5;
+    const barHeight = L.unit(0.04);
+
     const progressBox = this.add.graphics();
     progressBox.fillStyle(0x222244, 0.8);
-    progressBox.fillRoundedRect(cx - 200, cy - 14, 400, 28, 4);
+    progressBox.fillRoundedRect(L.cx - barWidth / 2, L.cy - barHeight / 2, barWidth, barHeight, 4);
 
     const progressBar = this.add.graphics();
 
-    const loadingText = this.add.text(cx, cy + 30, 'Loading...', {
-      fontSize: '16px',
+    const loadingText = this.add.text(L.cx, L.cy + L.unit(0.06), 'Loading...', {
+      fontSize: L.fontSize('small'),
       fontFamily: 'Arial',
       color: '#888899',
     }).setOrigin(0.5);
 
+    const innerPad = barWidth * 0.0125;
+    const innerWidth = barWidth - innerPad * 2;
+    const innerHeight = barHeight - innerPad * 2;
+
     this.load.on('progress', (value: number) => {
       progressBar.clear();
       progressBar.fillStyle(0x00ccff, 1);
-      progressBar.fillRoundedRect(cx - 195, cy - 10, 390 * value, 20, 3);
+      progressBar.fillRoundedRect(
+        L.cx - barWidth / 2 + innerPad,
+        L.cy - barHeight / 2 + innerPad,
+        innerWidth * value,
+        innerHeight,
+        3,
+      );
     });
 
     this.load.on('complete', () => {

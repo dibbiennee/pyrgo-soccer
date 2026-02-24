@@ -16,7 +16,7 @@ import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
 import { showToast } from '../ui/ToastNotification';
 import { SoundManager } from '../audio/SoundManager';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 
 // ─── Constants ─────────────────────────────────────────
 const TOTAL_STAT_POINTS = 15;
@@ -27,6 +27,8 @@ const TABS = ['LOOK', 'JERSEY', 'STATS', 'SUPER', 'NAME'] as const;
 type TabName = typeof TABS[number];
 
 export class CharacterCreatorScene extends Phaser.Scene {
+  private L!: LayoutManager;
+
   private appearance!: Appearance;
   private charName = 'PLAYER';
   private stats = { speed: 5, power: 5, defense: 5 };
@@ -80,22 +82,23 @@ export class CharacterCreatorScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const cx = W / 2;
+    this.L = new LayoutManager(this);
+    const L = this.L;
 
     // Background
-    this.add.rectangle(cx, H / 2, W, H, 0x0d0d1a);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
 
     // Title
-    this.add.text(cx, 20, this.editIndex !== null ? 'EDIT CHARACTER' : 'CREATE CHARACTER', {
-      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.03), this.editIndex !== null ? 'EDIT CHARACTER' : 'CREATE CHARACTER', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
 
     // ── Live Preview (left) ────────────────────────
-    this.add.rectangle(150, 340, 240, 400, 0x1a1a2e).setStrokeStyle(2, 0x333355);
-    this.previewContainer = this.add.container(150, 310);
+    const previewBoxW = L.w * 0.18;
+    const previewBoxH = L.h * 0.55;
+    this.add.rectangle(L.x(0.13), L.y(0.45), previewBoxW, previewBoxH, 0x1a1a2e).setStrokeStyle(2, 0x333355);
+    this.previewContainer = this.add.container(L.x(0.13), L.y(0.42));
     this.refreshPreview();
 
     // ── Tab bar ────────────────────────────────────
@@ -113,13 +116,15 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // PREVIEW
   // ════════════════════════════════════════════════════
   private refreshPreview(): void {
+    const L = this.L;
     this.previewContainer.removeAll(true);
-    const parts = CharacterRenderer.renderCharacter(this, this.appearance, { scale: 2.0, facingRight: true });
+    const previewScale = L.unit(0.004);
+    const parts = CharacterRenderer.renderCharacter(this, this.appearance, { scale: previewScale, facingRight: true });
     for (const part of parts) {
       this.previewContainer.add(part);
     }
-    const nameLabel = this.add.text(0, 90, this.charName, {
-      fontSize: '16px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    const nameLabel = this.add.text(0, L.h * 0.12, this.charName, {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5);
     this.previewContainer.add(nameLabel);
@@ -129,18 +134,21 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // TABS
   // ════════════════════════════════════════════════════
   private createTabs(): void {
-    const tabW = 110;
-    const startX = 340;
-    const y = 60;
+    const L = this.L;
+    const tabW = L.w * 0.09;
+    const tabH = L.unit(0.06);
+    const gap = L.unit(0.015);
+    const startX = L.x(0.27);
+    const y = L.y(0.09);
 
     TABS.forEach((tab, i) => {
-      const x = startX + i * (tabW + 8);
-      const bg = this.add.rectangle(x, y, tabW, 30, 0x2a2a4e);
+      const x = startX + i * (tabW + gap);
+      const bg = this.add.rectangle(x, y, tabW, tabH, 0x2a2a4e);
       bg.setStrokeStyle(1, 0x444466);
       bg.setInteractive({ useHandCursor: true });
 
       const label = this.add.text(x, y, tab, {
-        fontSize: '13px', fontFamily: 'Arial', color: '#aaaacc',
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#aaaacc',
       }).setOrigin(0.5);
 
       bg.on('pointerdown', () => this.showTab(tab));
@@ -183,51 +191,55 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // LOOK PANEL
   // ════════════════════════════════════════════════════
   private buildLookPanel(): void {
-    const px = 640;
-    let y = 105;
+    const L = this.L;
+    const px = L.x(0.55);
+    let y = L.y(0.16);
+    const sectionGap = L.h * 0.065;
+    const labelToControl = L.h * 0.035;
+    const colorLabelToControl = L.h * 0.04;
 
     this.addSectionLabel(px, y, 'FACE');
-    y += 25;
+    y += labelToControl;
     this.addCycler(px, y, FACE_SHAPES as unknown as string[], this.appearance.faceShape, (val) => {
       this.appearance.faceShape = val as FaceShape;
       this.refreshPreview();
     });
 
-    y += 50;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'HAIR STYLE');
-    y += 25;
+    y += labelToControl;
     this.addCycler(px, y, HAIR_STYLES as unknown as string[], this.appearance.hairStyle, (val) => {
       this.appearance.hairStyle = val as HairStyle;
       this.refreshPreview();
     });
 
-    y += 50;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'HAIR COLOR');
-    y += 28;
+    y += colorLabelToControl;
     this.addColorPicker(px, y, HAIR_COLORS, this.appearance.hairColor, (color) => {
       this.appearance.hairColor = color;
       this.refreshPreview();
     });
 
-    y += 50;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'SKIN');
-    y += 28;
+    y += colorLabelToControl;
     this.addColorPicker(px, y, SKIN_TONES, this.appearance.skinTone, (color) => {
       this.appearance.skinTone = color;
       this.refreshPreview();
     });
 
-    y += 50;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'EYES');
-    y += 25;
+    y += labelToControl;
     this.addCycler(px, y, EYE_STYLES as unknown as string[], this.appearance.eyeStyle, (val) => {
       this.appearance.eyeStyle = val as EyeStyle;
       this.refreshPreview();
     });
 
-    y += 50;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'BEARD');
-    y += 25;
+    y += labelToControl;
     this.addCycler(px, y, BEARD_STYLES as unknown as string[], this.appearance.beard, (val) => {
       this.appearance.beard = val as BeardStyle;
       this.refreshPreview();
@@ -238,27 +250,30 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // JERSEY PANEL
   // ════════════════════════════════════════════════════
   private buildJerseyPanel(): void {
-    const px = 640;
-    let y = 120;
+    const L = this.L;
+    const px = L.x(0.55);
+    let y = L.y(0.18);
+    const sectionGap = L.h * 0.08;
+    const labelToControl = L.h * 0.04;
 
     this.addSectionLabel(px, y, 'PRIMARY COLOR');
-    y += 28;
+    y += labelToControl;
     this.addColorPicker(px, y, JERSEY_COLORS, this.appearance.jerseyColor1, (color) => {
       this.appearance.jerseyColor1 = color;
       this.refreshPreview();
     });
 
-    y += 60;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'ACCENT COLOR');
-    y += 28;
+    y += labelToControl;
     this.addColorPicker(px, y, JERSEY_COLORS, this.appearance.jerseyColor2, (color) => {
       this.appearance.jerseyColor2 = color;
       this.refreshPreview();
     });
 
-    y += 60;
+    y += sectionGap;
     this.addSectionLabel(px, y, 'JERSEY NUMBER');
-    y += 30;
+    y += labelToControl;
     this.addNumberSelector(px, y, this.appearance.jerseyNumber, 1, 99, (val) => {
       this.appearance.jerseyNumber = val;
       this.refreshPreview();
@@ -269,16 +284,17 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // STATS PANEL
   // ════════════════════════════════════════════════════
   private buildStatsPanel(): void {
-    const px = 640;
-    let y = 110;
+    const L = this.L;
+    const px = L.x(0.55);
+    let y = L.y(0.16);
 
     const remaining = TOTAL_STAT_POINTS - this.stats.speed - this.stats.power - this.stats.defense;
     const remainLabel = this.add.text(px, y, `Points remaining: ${remaining}`, {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffaa00',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
     this.panelContainer.add(remainLabel);
 
-    y += 45;
+    y += L.h * 0.06;
     const statDefs: { key: 'speed' | 'power' | 'defense'; label: string; desc: string }[] = [
       { key: 'speed', label: 'SPEED', desc: 'Movement + jump speed' },
       { key: 'power', label: 'POWER', desc: 'Kick force + header' },
@@ -287,22 +303,23 @@ export class CharacterCreatorScene extends Phaser.Scene {
 
     for (const def of statDefs) {
       this.addSectionLabel(px, y, def.label);
-      y += 5;
-      const descText = this.add.text(px, y + 14, def.desc, {
-        fontSize: '12px', fontFamily: 'Arial', color: '#666688',
+      y += L.h * 0.008;
+      const descText = this.add.text(px, y + L.h * 0.02, def.desc, {
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#666688',
       }).setOrigin(0.5);
       this.panelContainer.add(descText);
 
-      y += 35;
+      y += L.h * 0.048;
       this.addStatSlider(px, y, def.key, remainLabel);
-      y += 60;
+      y += L.h * 0.08;
     }
   }
 
   private addStatSlider(cx: number, cy: number, key: 'speed' | 'power' | 'defense', remainLabel: Phaser.GameObjects.Text): void {
+    const L = this.L;
     const value = this.stats[key];
-    const barW = 280;
-    const barH = 20;
+    const barW = L.w * 0.25;
+    const barH = L.h * 0.03;
 
     const barBg = this.add.rectangle(cx, cy, barW, barH, 0x222244);
     barBg.setStrokeStyle(1, 0x444466);
@@ -313,11 +330,13 @@ export class CharacterCreatorScene extends Phaser.Scene {
     this.panelContainer.add(fillBar);
 
     const valText = this.add.text(cx, cy, String(value), {
-      fontSize: '14px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(valText);
 
-    const minusBtn = this.createSmallButton(cx - barW / 2 - 28, cy, '-', () => {
+    const btnOffset = barW / 2 + L.unit(0.05);
+
+    const minusBtn = this.createSmallButton(cx - btnOffset, cy, '-', () => {
       if (this.stats[key] > MIN_STAT) {
         this.stats[key]--;
         this.showTab('STATS');
@@ -325,7 +344,7 @@ export class CharacterCreatorScene extends Phaser.Scene {
     });
     this.panelContainer.add(minusBtn);
 
-    const plusBtn = this.createSmallButton(cx + barW / 2 + 28, cy, '+', () => {
+    const plusBtn = this.createSmallButton(cx + btnOffset, cy, '+', () => {
       const remaining = TOTAL_STAT_POINTS - this.stats.speed - this.stats.power - this.stats.defense;
       if (this.stats[key] < MAX_STAT && remaining > 0) {
         this.stats[key]++;
@@ -339,11 +358,13 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // SUPER PANEL
   // ════════════════════════════════════════════════════
   private buildSuperPanel(): void {
-    const startX = 390;
-    const startY = 110;
-    const cardW = 220;
-    const cardH = 65;
-    const gap = 8;
+    const L = this.L;
+    const cardW = L.w * 0.17;
+    const cardH = L.h * 0.09;
+    const gap = L.pad(0.5);
+    const panelCx = L.x(0.55);
+    const startX = panelCx - (cardW + gap) / 2;
+    const startY = L.y(0.16);
 
     SUPER_MOVES.forEach((move, i) => {
       const col = i % 2;
@@ -357,23 +378,24 @@ export class CharacterCreatorScene extends Phaser.Scene {
       bg.setInteractive({ useHandCursor: true });
       this.panelContainer.add(bg);
 
-      const dot = this.add.arc(x - cardW / 2 + 18, y - 10, 7, 0, 360, false, move.color);
+      const dotR = L.unit(0.012);
+      const dot = this.add.arc(x - cardW / 2 + L.pad(1), y - cardH * 0.15, dotR, 0, 360, false, move.color);
       this.panelContainer.add(dot);
 
-      const nameText = this.add.text(x - cardW / 2 + 32, y - 20, move.displayName, {
-        fontSize: '14px', fontFamily: 'Arial Black, Arial', color: isSelected ? '#ffffff' : '#aaaacc',
+      const nameText = this.add.text(x - cardW / 2 + L.pad(1.5) + dotR, y - cardH * 0.3, move.displayName, {
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial Black, Arial', color: isSelected ? '#ffffff' : '#aaaacc',
       });
       this.panelContainer.add(nameText);
 
-      const descText = this.add.text(x - cardW / 2 + 14, y + 2, move.description, {
-        fontSize: '11px', fontFamily: 'Arial', color: '#888899',
-        wordWrap: { width: cardW - 26 },
+      const descText = this.add.text(x - cardW / 2 + L.pad(0.8), y + cardH * 0.05, move.description, {
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#888899',
+        wordWrap: { width: cardW - L.pad(1.5) },
       });
       this.panelContainer.add(descText);
 
       if (isSelected) {
-        const check = this.add.text(x + cardW / 2 - 18, y - 18, '\u2713', {
-          fontSize: '18px', fontFamily: 'Arial', color: '#00ff88',
+        const check = this.add.text(x + cardW / 2 - L.pad(1), y - cardH * 0.28, '\u2713', {
+          fontSize: L.fontSize('body'), fontFamily: 'Arial', color: '#00ff88',
         }).setOrigin(0.5);
         this.panelContainer.add(check);
       }
@@ -391,27 +413,30 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // NAME PANEL
   // ════════════════════════════════════════════════════
   private buildNamePanel(): void {
-    const px = 640;
-    let y = 115;
+    const L = this.L;
+    const px = L.x(0.55);
+    let y = L.y(0.16);
 
     this.addSectionLabel(px, y, 'CHARACTER NAME');
-    y += 30;
+    y += L.h * 0.04;
 
-    const nameBg = this.add.rectangle(px, y, 280, 36, 0x111122);
+    const nameBoxW = L.w * 0.22;
+    const nameBoxH = L.h * 0.05;
+    const nameBg = this.add.rectangle(px, y, nameBoxW, nameBoxH, 0x111122);
     nameBg.setStrokeStyle(2, 0x444466);
     this.panelContainer.add(nameBg);
 
     const nameText = this.add.text(px, y, this.charName, {
-      fontSize: '18px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(nameText);
 
     // Virtual keyboard
-    y += 42;
+    y += L.h * 0.055;
     const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const keysPerRow = 10;
-    const keySize = 34;
-    const keyGap = 4;
+    const keySize = L.unit(0.07);
+    const keyGap = L.unit(0.008);
     const totalRowW = keysPerRow * (keySize + keyGap) - keyGap;
     const kbStartX = px - totalRowW / 2 + keySize / 2;
 
@@ -428,7 +453,7 @@ export class CharacterCreatorScene extends Phaser.Scene {
       this.panelContainer.add(keyBg);
 
       const keyLabel = this.add.text(kx, ky, char, {
-        fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffffff',
       }).setOrigin(0.5);
       this.panelContainer.add(keyLabel);
 
@@ -445,12 +470,14 @@ export class CharacterCreatorScene extends Phaser.Scene {
 
     // DEL button
     const delY = y + Math.ceil(keys.length / keysPerRow) * (keySize + keyGap);
-    const delBg = this.add.rectangle(px - 70, delY, 80, 34, 0x664444);
+    const actionBtnW = L.w * 0.06;
+    const actionBtnH = L.h * 0.045;
+    const delBg = this.add.rectangle(px - L.w * 0.055, delY, actionBtnW, actionBtnH, 0x664444);
     delBg.setStrokeStyle(1, 0x884444);
     delBg.setInteractive({ useHandCursor: true });
     this.panelContainer.add(delBg);
-    const delLabel = this.add.text(px - 70, delY, 'DEL', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+    const delLabel = this.add.text(px - L.w * 0.055, delY, 'DEL', {
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(delLabel);
     delBg.on('pointerdown', () => {
@@ -462,12 +489,12 @@ export class CharacterCreatorScene extends Phaser.Scene {
     });
 
     // CLR button
-    const clrBg = this.add.rectangle(px + 70, delY, 80, 34, 0x664444);
+    const clrBg = this.add.rectangle(px + L.w * 0.055, delY, actionBtnW, actionBtnH, 0x664444);
     clrBg.setStrokeStyle(1, 0x884444);
     clrBg.setInteractive({ useHandCursor: true });
     this.panelContainer.add(clrBg);
-    const clrLabel = this.add.text(px + 70, delY, 'CLR', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+    const clrLabel = this.add.text(px + L.w * 0.055, delY, 'CLR', {
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(clrLabel);
     clrBg.on('pointerdown', () => {
@@ -508,16 +535,18 @@ export class CharacterCreatorScene extends Phaser.Scene {
     }
 
     // ── Public/Private toggle ──────────────────
-    const toggleY = delY + 55;
-    this.addSectionLabel(px, toggleY - 12, 'VISIBILITY');
+    const toggleY = delY + L.h * 0.07;
+    this.addSectionLabel(px, toggleY - L.h * 0.015, 'VISIBILITY');
 
-    const toggleBg = this.add.rectangle(px, toggleY + 18, 260, 36, this.isPublic ? 0x226644 : 0x442266);
+    const toggleW = L.w * 0.2;
+    const toggleH = L.h * 0.048;
+    const toggleBg = this.add.rectangle(px, toggleY + L.h * 0.025, toggleW, toggleH, this.isPublic ? 0x226644 : 0x442266);
     toggleBg.setStrokeStyle(2, this.isPublic ? 0x44cc88 : 0x8844cc);
     toggleBg.setInteractive({ useHandCursor: true });
     this.panelContainer.add(toggleBg);
 
-    const toggleText = this.add.text(px, toggleY + 18, this.isPublic ? 'PUBLIC' : 'PRIVATE', {
-      fontSize: '16px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    const toggleText = this.add.text(px, toggleY + L.h * 0.025, this.isPublic ? 'PUBLIC' : 'PRIVATE', {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(toggleText);
 
@@ -533,12 +562,16 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // BOTTOM BUTTONS
   // ════════════════════════════════════════════════════
   private createBottomButtons(): void {
-    createButton(this, 80, CANVAS_H - 30, '\u2190 BACK', () => transitionTo(this, this.returnTo), {
-      width: 110, height: 36, fontSize: '14px', strokeColor: 0x666666,
+    const L = this.L;
+    const btnSmall = L.button('small');
+    const btnNormal = L.button('normal');
+
+    createButton(this, L.x(0.08), L.y(0.96), '\u2190 BACK', () => transitionTo(this, this.returnTo), {
+      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('tiny'), strokeColor: 0x666666,
     });
 
-    createButton(this, CANVAS_W - 120, CANVAS_H - 30, 'SAVE', () => this.saveCharacter(), {
-      width: 160, height: 40, fillColor: 0x00aa44, strokeColor: 0x00ff66, fontSize: '18px',
+    createButton(this, L.x(0.92), L.y(0.96), 'SAVE', () => this.saveCharacter(), {
+      width: btnNormal.width, height: btnNormal.height, fillColor: 0x00aa44, strokeColor: 0x00ff66, fontSize: L.fontSize('body'),
     });
   }
 
@@ -594,29 +627,33 @@ export class CharacterCreatorScene extends Phaser.Scene {
   // UI HELPERS
   // ════════════════════════════════════════════════════
   private addSectionLabel(x: number, y: number, text: string): void {
+    const L = this.L;
     const label = this.add.text(x, y, text, {
-      fontSize: '13px', fontFamily: 'Arial', color: '#00ccff',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#00ccff',
     }).setOrigin(0.5);
     this.panelContainer.add(label);
   }
 
   private addCycler(cx: number, cy: number, options: string[], current: string, onChange: (val: string) => void): void {
+    const L = this.L;
     let index = options.indexOf(current);
     if (index < 0) index = 0;
 
     const display = this.add.text(cx, cy, options[index].toUpperCase(), {
-      fontSize: '15px', fontFamily: 'Arial', color: '#ffffff',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(display);
 
-    const leftBtn = this.createSmallButton(cx - 100, cy, '<', () => {
+    const spacing = L.unit(0.2);
+
+    const leftBtn = this.createSmallButton(cx - spacing, cy, '<', () => {
       index = (index - 1 + options.length) % options.length;
       display.setText(options[index].toUpperCase());
       onChange(options[index]);
     });
     this.panelContainer.add(leftBtn);
 
-    const rightBtn = this.createSmallButton(cx + 100, cy, '>', () => {
+    const rightBtn = this.createSmallButton(cx + spacing, cy, '>', () => {
       index = (index + 1) % options.length;
       display.setText(options[index].toUpperCase());
       onChange(options[index]);
@@ -625,8 +662,9 @@ export class CharacterCreatorScene extends Phaser.Scene {
   }
 
   private addColorPicker(cx: number, cy: number, colors: number[], current: number, onChange: (color: number) => void): void {
-    const swatchSize = 28;
-    const gap = 5;
+    const L = this.L;
+    const swatchSize = L.unit(0.06);
+    const gap = L.pad(0.3);
     const totalW = colors.length * (swatchSize + gap) - gap;
     const startX = cx - totalW / 2 + swatchSize / 2;
 
@@ -645,14 +683,17 @@ export class CharacterCreatorScene extends Phaser.Scene {
   }
 
   private addNumberSelector(cx: number, cy: number, current: number, min: number, max: number, onChange: (val: number) => void): void {
+    const L = this.L;
     let value = current;
 
     const display = this.add.text(cx, cy, String(value), {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5);
     this.panelContainer.add(display);
 
-    const minus = this.createSmallButton(cx - 60, cy, '-', () => {
+    const spacing = L.unit(0.1);
+
+    const minus = this.createSmallButton(cx - spacing, cy, '-', () => {
       if (value > min) {
         value--;
         display.setText(String(value));
@@ -661,7 +702,7 @@ export class CharacterCreatorScene extends Phaser.Scene {
     });
     this.panelContainer.add(minus);
 
-    const plus = this.createSmallButton(cx + 60, cy, '+', () => {
+    const plus = this.createSmallButton(cx + spacing, cy, '+', () => {
       if (value < max) {
         value++;
         display.setText(String(value));
@@ -672,14 +713,17 @@ export class CharacterCreatorScene extends Phaser.Scene {
   }
 
   private createSmallButton(x: number, y: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
+    const L = this.L;
+    const btnW = L.unit(0.07);
+    const btnH = L.unit(0.055);
     const container = this.add.container(x, y);
-    const bg = this.add.rectangle(0, 0, 34, 28, 0x333355);
+    const bg = this.add.rectangle(0, 0, btnW, btnH, 0x333355);
     bg.setStrokeStyle(1, 0x555577);
     bg.setInteractive({ useHandCursor: true });
     container.add(bg);
 
     const text = this.add.text(0, 0, label, {
-      fontSize: '16px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+      fontSize: L.fontSize('small'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5);
     container.add(text);
 

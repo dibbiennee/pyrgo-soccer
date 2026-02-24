@@ -13,7 +13,7 @@ import { CommunityGalleryScene } from './scenes/CommunityGalleryScene';
 import { VsScreen } from './scenes/VsScreen';
 import { HowToPlayScene } from './scenes/HowToPlayScene';
 import { CreditsScene } from './scenes/CreditsScene';
-import { CANVAS_W, CANVAS_H } from './utils/responsive';
+// RESIZE mode — canvas adapts to any screen size
 
 // ─── Global error handlers ─────────────────────────
 window.onerror = (_msg, _src, _line, _col, _err) => {
@@ -80,13 +80,13 @@ SocketManager.getInstance().on('SERVER_SHUTDOWN', () => {
 // ─── Phaser game ───────────────────────────────────
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: CANVAS_W,
-  height: CANVAS_H,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: '100%',
+    height: '100%',
   },
   physics: {
     default: 'arcade',

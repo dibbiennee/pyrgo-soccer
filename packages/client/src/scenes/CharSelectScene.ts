@@ -10,11 +10,13 @@ import { CharacterStorage } from '../storage/CharacterStorage';
 import { CharacterApi, type PublishedCharacter } from '../api/CharacterApi';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 
 type SelectTab = 'mine' | 'preset' | 'community';
 
 export class CharSelectScene extends Phaser.Scene {
+  private L!: LayoutManager;
+
   private mode: 'local' | 'online' | 'cpu' = 'local';
   private activePlayer = 1;
   private activeTab: SelectTab = 'preset';
@@ -45,21 +47,20 @@ export class CharSelectScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const cx = W / 2;
+    this.L = new LayoutManager(this);
+    const L = this.L;
 
-    this.add.rectangle(cx, H / 2, W, H, 0x1a1a2e);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x1a1a2e);
 
     // Title
-    this.add.text(cx, 25, 'SELECT YOUR FIGHTER', {
-      fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(L.cx, L.y(0.04), 'SELECT YOUR FIGHTER', {
+      fontSize: L.fontSize('heading'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Selection indicator
-    this.selectionIndicator = this.add.text(cx, 55, 'Player 1 \u2014 Choose!', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#ffaa00',
+    this.selectionIndicator = this.add.text(L.cx, L.y(0.08), 'Player 1 \u2014 Choose!', {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 
     // ── Tabs ─────────────────────────────────────
@@ -70,44 +71,49 @@ export class CharSelectScene extends Phaser.Scene {
     this.showGrid();
 
     // ── Preview area ─────────────────────────────
-    this.previewContainer = this.add.container(cx, 510);
+    this.previewContainer = this.add.container(L.cx, L.y(0.68));
 
-    this.nameText = this.add.text(0, -60, '', {
-      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    this.nameText = this.add.text(0, 0, '', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
     this.previewContainer.add(this.nameText);
 
-    const statsX = -260;
+    const statsOffsetX = -L.w * 0.2;
+    const statLineH = L.fontSizeN('small') * 1.5;
     this.statsTexts = {
-      speed: this.add.text(statsX, -30, '', { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff' }),
-      power: this.add.text(statsX, -6, '', { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff' }),
-      defense: this.add.text(statsX, 18, '', { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff' }),
+      speed: this.add.text(statsOffsetX, L.h * 0.04, '', { fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff' }),
+      power: this.add.text(statsOffsetX, L.h * 0.04 + statLineH, '', { fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff' }),
+      defense: this.add.text(statsOffsetX, L.h * 0.04 + statLineH * 2, '', { fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff' }),
     };
     this.previewContainer.add(this.statsTexts.speed);
     this.previewContainer.add(this.statsTexts.power);
     this.previewContainer.add(this.statsTexts.defense);
 
-    this.superText = this.add.text(0, 50, '', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: 600 },
+    this.superText = this.add.text(0, L.h * 0.14, '', {
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: L.w * 0.5 },
     }).setOrigin(0.5);
     this.previewContainer.add(this.superText);
 
     this.updatePreview();
 
     // ── Bottom buttons ───────────────────────────
-    createButton(this, cx, H - 35, 'CONFIRM', () => this.confirmSelection(), {
-      width: 200, height: 42, fillColor: 0x00aa44, strokeColor: 0x00ff66,
+    const btnNormal = L.button('normal');
+    const btnSmall = L.button('small');
+
+    createButton(this, L.cx, L.y(0.94), 'CONFIRM', () => this.confirmSelection(), {
+      width: btnNormal.width, height: btnNormal.height, fillColor: 0x00aa44, strokeColor: 0x00ff66,
+      fontSize: L.fontSize('body'),
     });
 
-    createButton(this, 80, H - 35, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
-      width: 110, height: 36, fontSize: '14px', strokeColor: 0x666666,
+    createButton(this, L.x(0.08), L.y(0.94), '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+      width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('tiny'), strokeColor: 0x666666,
     });
 
-    createButton(this, W - 100, H - 35, '+ CREATE', () => {
+    createButton(this, L.x(0.92), L.y(0.94), '+ CREATE', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'CharSelect' });
     }, {
-      width: 140, height: 36, fontSize: '14px', fillColor: 0x225588, strokeColor: 0x44aaff,
+      width: btnSmall.width * 1.1, height: btnSmall.height, fontSize: L.fontSize('tiny'), fillColor: 0x225588, strokeColor: 0x44aaff,
     });
   }
 
@@ -115,24 +121,27 @@ export class CharSelectScene extends Phaser.Scene {
   // TABS
   // ════════════════════════════════════════════════════
   private createTabs(): void {
+    const L = this.L;
     const tabs: { key: SelectTab; label: string }[] = [
       { key: 'mine', label: 'I MIEI' },
       { key: 'preset', label: 'PRESET' },
       { key: 'community', label: 'COMMUNITY' },
     ];
 
-    const tabW = 160;
-    const startX = CANVAS_W / 2 - (tabs.length * (tabW + 8)) / 2 + tabW / 2;
-    const y = 85;
+    const tabW = L.w * 0.12;
+    const tabH = L.unit(0.06);
+    const gap = L.pad(0.5);
+    const startX = L.cx - (tabs.length * (tabW + gap)) / 2 + tabW / 2;
+    const y = L.y(0.13);
 
     tabs.forEach((tab, i) => {
-      const x = startX + i * (tabW + 8);
-      const bg = this.add.rectangle(x, y, tabW, 30, 0x2a2a4e);
+      const x = startX + i * (tabW + gap);
+      const bg = this.add.rectangle(x, y, tabW, tabH, 0x2a2a4e);
       bg.setStrokeStyle(1, 0x444466);
       bg.setInteractive({ useHandCursor: true });
 
       const label = this.add.text(x, y, tab.label, {
-        fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#aaaacc',
       }).setOrigin(0.5);
 
       bg.on('pointerdown', () => {
@@ -181,11 +190,14 @@ export class CharSelectScene extends Phaser.Scene {
   }
 
   private buildPresetGrid(): void {
+    const L = this.L;
     const count = CHARACTERS.length;
-    const spacing = 180;
+    const cardS = L.cardSize();
+    const gap = L.cardGap();
+    const spacing = cardS + gap;
     const totalW = (count - 1) * spacing;
-    const startX = CANVAS_W / 2 - totalW / 2;
-    const y = 220;
+    const startX = L.cx - totalW / 2;
+    const y = L.y(0.32);
 
     CHARACTERS.forEach((char, i) => {
       const x = startX + i * spacing;
@@ -194,13 +206,16 @@ export class CharSelectScene extends Phaser.Scene {
   }
 
   private buildMyCharsGrid(): void {
+    const L = this.L;
     const customs = CharacterStorage.getAll();
-    const spacing = 180;
-    const y = 220;
+    const cardS = L.cardSize();
+    const gap = L.cardGap();
+    const spacing = cardS + gap;
+    const y = L.y(0.32);
 
     if (customs.length === 0) {
-      const emptyText = this.add.text(CANVAS_W / 2, y, 'No custom characters yet.\nTap "+ CREATE" to make one!', {
-        fontSize: '16px', fontFamily: 'Arial', color: '#666688',
+      const emptyText = this.add.text(L.cx, y, 'No custom characters yet.\nTap "+ CREATE" to make one!', {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#666688',
         align: 'center',
       }).setOrigin(0.5);
       this.gridContainer.add(emptyText);
@@ -208,7 +223,7 @@ export class CharSelectScene extends Phaser.Scene {
     }
 
     const totalW = (customs.length - 1) * spacing;
-    const startX = CANVAS_W / 2 - totalW / 2;
+    const startX = L.cx - totalW / 2;
 
     customs.forEach((char, i) => {
       const x = startX + i * spacing;
@@ -217,9 +232,15 @@ export class CharSelectScene extends Phaser.Scene {
   }
 
   private buildCommunityGrid(): void {
+    const L = this.L;
+    const cardS = L.cardSize();
+    const gap = L.cardGap();
+    const spacing = cardS + gap;
+    const y = L.y(0.32);
+
     if (this.communityChars.length === 0) {
-      const loadingText = this.add.text(CANVAS_W / 2, 220, 'Loading community...', {
-        fontSize: '16px', fontFamily: 'Arial', color: '#666688',
+      const loadingText = this.add.text(L.cx, y, 'Loading community...', {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#666688',
       }).setOrigin(0.5);
       this.gridContainer.add(loadingText);
 
@@ -232,15 +253,13 @@ export class CharSelectScene extends Phaser.Scene {
       return;
     }
 
-    const spacing = 180;
-    const y = 220;
     const visibleChars = this.communityChars.slice(0, 6);
     const totalW = (visibleChars.length - 1) * spacing;
-    const startX = CANVAS_W / 2 - totalW / 2;
+    const startX = L.cx - totalW / 2;
 
     if (visibleChars.length === 0) {
-      const text = this.add.text(CANVAS_W / 2, y, 'No community characters yet.', {
-        fontSize: '16px', fontFamily: 'Arial', color: '#666688',
+      const text = this.add.text(L.cx, y, 'No community characters yet.', {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#666688',
       }).setOrigin(0.5);
       this.gridContainer.add(text);
       return;
@@ -253,22 +272,25 @@ export class CharSelectScene extends Phaser.Scene {
   }
 
   private createCharCard(x: number, y: number, name: string, charDef: CharacterDef, ref: CharacterRef): void {
+    const L = this.L;
+    const cardS = L.cardSize();
     const container = this.add.container(x, y);
     this.gridContainer.add(container);
 
     const isSelected = this.isRefSelected(ref);
 
-    const bg = this.add.rectangle(0, 0, 120, 110, 0x2a2a4e);
+    const bg = this.add.rectangle(0, 0, cardS, cardS * 0.92, 0x2a2a4e);
     bg.setStrokeStyle(2, isSelected ? (this.activePlayer === 1 ? 0x00ccff : 0xff4444) : 0x444466);
     bg.setInteractive({ useHandCursor: true });
     container.add(bg);
 
     const appearance: Appearance = charDef.appearance ?? defaultAppearanceForPreset(charDef.id);
-    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -12, 0.6);
+    const miniScale = cardS / 200;
+    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -cardS * 0.1, miniScale);
     container.add(preview);
 
-    const nameLabel = this.add.text(0, 42, name, {
-      fontSize: '12px', fontFamily: 'Arial', color: '#cccccc',
+    const nameLabel = this.add.text(0, cardS * 0.35, name, {
+      fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#cccccc',
     }).setOrigin(0.5);
     container.add(nameLabel);
 

@@ -6,7 +6,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { SocketManager } from '../network/SocketManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { CANVAS_W, CANVAS_H } from '../utils/responsive';
+import { LayoutManager } from '../utils/LayoutManager';
 
 interface MatchStats {
   shotsP1: number;
@@ -29,6 +29,8 @@ export class ResultScene extends Phaser.Scene {
   private rematchBtn?: ButtonGroup;
   private rematchRequested = false;
   private opponentLeft = false;
+
+  private L!: LayoutManager;
 
   constructor() {
     super('Result');
@@ -60,9 +62,8 @@ export class ResultScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const cx = W / 2;
+    const L = new LayoutManager(this);
+    this.L = L;
 
     const sm = SoundManager.getInstance();
     const char1 = resolveCharacter(this.charRef1);
@@ -71,11 +72,11 @@ export class ResultScene extends Phaser.Scene {
     const appearance2: Appearance = char2.appearance ?? defaultAppearanceForPreset(char2.id);
 
     // Background
-    this.add.rectangle(cx, H / 2, W, H, 0x0a0a1a);
+    this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0a0a1a);
 
     // ── "TEMPO SCADUTO" animated ────────────────────
-    const tempoText = this.add.text(cx, 25, 'TEMPO SCADUTO', {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#aaaacc',
+    const tempoText = this.add.text(L.cx, L.y(0.04), 'TEMPO SCADUTO', {
+      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#aaaacc',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5).setScale(0);
 
@@ -94,8 +95,8 @@ export class ResultScene extends Phaser.Scene {
       resultColor = '#ffdd00';
     }
 
-    const title = this.add.text(cx, 110, resultText, {
-      fontSize: '40px',
+    const title = this.add.text(L.cx, L.y(0.14), resultText, {
+      fontSize: L.fontSize('title'),
       fontFamily: 'Arial Black, Arial',
       color: resultColor,
       stroke: '#000000',
@@ -105,21 +106,22 @@ export class ResultScene extends Phaser.Scene {
     this.tweens.add({ targets: title, scale: 1, duration: 600, ease: 'Back.easeOut', delay: 200 });
 
     // ── Score ────────────────────────────────────────
-    const scoreDisplay = this.add.text(cx, 170, `${this.score.player1} - ${this.score.player2}`, {
-      fontSize: '36px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    const scoreDisplay = this.add.text(L.cx, L.y(0.22), `${this.score.player1} - ${this.score.player2}`, {
+      fontSize: `${L.unit(0.08)}px`, fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5).setScale(0);
 
     this.tweens.add({ targets: scoreDisplay, scale: 1, duration: 500, ease: 'Back.easeOut', delay: 500 });
 
     // ── Character display ───────────────────────────
-    const p1X = W * 0.25;
-    const p2X = W * 0.75;
-    const charY = 310;
+    const p1X = L.x(0.25);
+    const p2X = L.x(0.75);
+    const charY = L.y(0.42);
 
     if (this.winner === null) {
-      const c1 = CharacterRenderer.renderMiniPreview(this, appearance1, p1X, charY, 2.0);
-      const c2 = CharacterRenderer.renderMiniPreview(this, appearance2, p2X, charY, 2.0);
+      const drawScale = L.unit(0.004);
+      const c1 = CharacterRenderer.renderMiniPreview(this, appearance1, p1X, charY, drawScale);
+      const c2 = CharacterRenderer.renderMiniPreview(this, appearance2, p2X, charY, drawScale);
       c1.setAlpha(0);
       c2.setAlpha(0);
       this.tweens.add({ targets: c1, alpha: 1, duration: 500, delay: 600 });
@@ -130,10 +132,13 @@ export class ResultScene extends Phaser.Scene {
       const winnerX = this.winner === 1 ? p1X : p2X;
       const loserX = this.winner === 1 ? p2X : p1X;
 
-      const winnerContainer = CharacterRenderer.renderMiniPreview(this, winnerAppearance, winnerX, charY - 10, 2.5);
+      const winnerScale = L.unit(0.005);
+      const loserScale = L.unit(0.003);
+
+      const winnerContainer = CharacterRenderer.renderMiniPreview(this, winnerAppearance, winnerX, charY - L.unit(0.012), winnerScale);
       winnerContainer.setAlpha(0);
 
-      const glow = this.add.arc(winnerX, charY - 10, 60, 0, 360, false, 0xffdd00, 0.2).setDepth(-1);
+      const glow = this.add.arc(winnerX, charY - L.unit(0.012), L.unit(0.075), 0, 360, false, 0xffdd00, 0.2).setDepth(-1);
       this.tweens.add({
         targets: glow,
         alpha: { from: 0.1, to: 0.3 },
@@ -143,27 +148,28 @@ export class ResultScene extends Phaser.Scene {
 
       this.tweens.add({ targets: winnerContainer, alpha: 1, duration: 500, delay: 600 });
       this.tweens.add({
-        targets: winnerContainer, y: charY - 25,
+        targets: winnerContainer, y: charY - L.unit(0.03),
         duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 800,
       });
 
-      const loserContainer = CharacterRenderer.renderMiniPreview(this, loserAppearance, loserX, charY + 30, 1.5);
+      const loserContainer = CharacterRenderer.renderMiniPreview(this, loserAppearance, loserX, charY + L.unit(0.04), loserScale);
       loserContainer.setAlpha(0);
       this.tweens.add({ targets: loserContainer, alpha: 0.5, duration: 500, delay: 700 });
     }
 
     // Character names
-    this.add.text(p1X, charY + 90, char1.name, {
-      fontSize: '16px', fontFamily: 'Arial', color: '#88aacc',
+    const nameY = charY + L.unit(0.18);
+    this.add.text(p1X, nameY, char1.name, {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#88aacc',
     }).setOrigin(0.5);
-    this.add.text(p2X, charY + 90, char2.name, {
-      fontSize: '16px', fontFamily: 'Arial', color: '#88aacc',
+    this.add.text(p2X, nameY, char2.name, {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#88aacc',
     }).setOrigin(0.5);
 
     // ── Match stats ─────────────────────────────────
-    const statsY = 460;
-    this.add.text(cx, statsY, 'MATCH STATS', {
-      fontSize: '16px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    const statsY = L.y(0.60);
+    this.add.text(L.cx, statsY, 'MATCH STATS', {
+      fontSize: L.fontSize('small'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
     }).setOrigin(0.5);
 
     const statRows = [
@@ -172,27 +178,27 @@ export class ResultScene extends Phaser.Scene {
     ];
 
     statRows.forEach((row, i) => {
-      const y = statsY + 28 + i * 24;
-      this.add.text(cx - 100, y, String(row.p1), {
-        fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
+      const y = statsY + L.pad(1.4) + i * L.pad(1.2);
+      this.add.text(L.cx - L.unit(0.12), y, String(row.p1), {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
       }).setOrigin(1, 0.5);
-      this.add.text(cx, y, row.label, {
-        fontSize: '14px', fontFamily: 'Arial', color: '#888899',
+      this.add.text(L.cx, y, row.label, {
+        fontSize: L.fontSize('tiny'), fontFamily: 'Arial', color: '#888899',
       }).setOrigin(0.5);
-      this.add.text(cx + 100, y, String(row.p2), {
-        fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
+      this.add.text(L.cx + L.unit(0.12), y, String(row.p2), {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffffff',
       }).setOrigin(0, 0.5);
     });
 
     // ── Celebration particles ────────────────────────
     if (this.winner) {
       for (let i = 0; i < 30; i++) {
-        const x = Math.random() * W;
+        const x = Math.random() * L.w;
         const p = this.add.arc(x, -10, 3 + Math.random() * 3, 0, 360, false,
           [0xffdd00, 0xff4400, 0x00ccff, 0xffffff][Math.floor(Math.random() * 4)]);
         this.tweens.add({
           targets: p,
-          y: H + 20,
+          y: L.h + 20,
           x: x + (Math.random() - 0.5) * 100,
           alpha: 0.5,
           duration: 2000 + Math.random() * 2000,
@@ -203,37 +209,38 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // ── Buttons ───────────────────────────────────────
-    const btnY = 610;
+    const btnY = L.y(0.80);
+    const btnSize = L.button('normal');
 
     if (this.gameMode === 'online') {
-      this.rematchBtn = createButton(this, cx - 150, btnY, 'RIVINCITA', () => {
+      this.rematchBtn = createButton(this, L.cx - L.unit(0.18), btnY, 'RIVINCITA', () => {
         this.requestOnlineRematch();
-      }, { width: 180, height: 44, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 
-      createButton(this, cx + 150, btnY, 'MENU', () => {
+      createButton(this, L.cx + L.unit(0.18), btnY, 'MENU', () => {
         const socket = SocketManager.getInstance();
         socket.emit('ROOM_LEAVE', {});
         this.cleanupOnlineListeners();
         transitionTo(this, 'MainMenu');
-      }, { width: 180, height: 44, fillColor: 0x444466, strokeColor: 0x666688 });
+      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x444466, strokeColor: 0x666688 });
 
       this.setupOnlineListeners();
     } else {
-      createButton(this, cx - 220, btnY, 'RIVINCITA', () => {
+      createButton(this, L.cx - L.unit(0.27), btnY, 'RIVINCITA', () => {
         transitionTo(this, 'VsScreen', {
           charRef1: this.charRef1,
           charRef2: this.charRef2,
           targetScene: this.gameMode === 'cpu' ? 'CpuGame' : 'LocalGame',
         });
-      }, { width: 180, height: 44, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 
-      createButton(this, cx, btnY, 'CAMBIA PG', () => {
+      createButton(this, L.cx, btnY, 'CAMBIA PG', () => {
         transitionTo(this, 'CharSelect', { mode: this.gameMode });
-      }, { width: 180, height: 44 });
+      }, { width: btnSize.width, height: btnSize.height });
 
-      createButton(this, cx + 220, btnY, 'MENU', () => {
+      createButton(this, L.cx + L.unit(0.27), btnY, 'MENU', () => {
         transitionTo(this, 'MainMenu');
-      }, { width: 180, height: 44, fillColor: 0x444466, strokeColor: 0x666688 });
+      }, { width: btnSize.width, height: btnSize.height, fillColor: 0x444466, strokeColor: 0x666688 });
     }
 
     // ── Sound ───────────────────────────────────────
@@ -252,8 +259,9 @@ export class ResultScene extends Phaser.Scene {
 
     socket.on('REMATCH_REQUESTED', (_data: { playerIndex: number }) => {
       SoundManager.getInstance().notificationPing();
-      const toast = this.add.text(CANVAS_W / 2, 570, 'L\'avversario vuole la rivincita!', {
-        fontSize: '16px', fontFamily: 'Arial', color: '#ffaa00',
+      const L = this.L;
+      const toast = this.add.text(L.cx, L.y(0.74), 'L\'avversario vuole la rivincita!', {
+        fontSize: L.fontSize('small'), fontFamily: 'Arial', color: '#ffaa00',
       }).setOrigin(0.5).setDepth(10);
       this.tweens.add({
         targets: toast, alpha: 0, delay: 3000, duration: 500,
