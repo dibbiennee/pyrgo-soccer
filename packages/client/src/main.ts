@@ -87,6 +87,9 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+    expandParent: true,
+    min: { width: 400, height: 240 },
+    max: { width: 1600, height: 960 },
   },
   physics: {
     default: 'arcade',
