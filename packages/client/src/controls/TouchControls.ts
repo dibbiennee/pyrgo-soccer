@@ -93,14 +93,14 @@ export class TouchControls {
     const sup   = clamp(70);
     const supH  = 48;
 
-    // Left side: D-pad
+    // Left side: D-pad + super
     this.createButton('p1_left',  px(0.065), py(0.875), dpad, dpad, '◄', THEME.touchDpad, THEME.touchDpadPressed);
     this.createButton('p1_right', px(0.165), py(0.875), dpad, dpad, '►', THEME.touchDpad, THEME.touchDpadPressed);
-    this.createButton('p1_jump',  px(0.115), py(0.71),  jump, jumpH, 'JUMP', THEME.touchJump, THEME.touchJumpPressed);
+    this.createButton('p1_super', px(0.115), py(0.71),  jump, jumpH, 'SUPER', THEME.touchSuper, THEME.touchSuperPressed);
 
-    // Right side: actions
+    // Right side: kick + jump above
     this.createButton('p1_kick',  px(0.90),  py(0.855), kick, kick, 'KICK', THEME.touchKick, THEME.touchKickPressed);
-    this.createButton('p1_super', px(0.90),  py(0.67),  sup,  supH, 'SUPER', THEME.touchSuper, THEME.touchSuperPressed);
+    this.createButton('p1_jump',  px(0.90),  py(0.67),  sup,  supH, 'JUMP', THEME.touchJump, THEME.touchJumpPressed);
   }
 
   private createButton(
