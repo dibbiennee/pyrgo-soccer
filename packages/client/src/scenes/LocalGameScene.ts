@@ -36,7 +36,7 @@ import type { InputState, CharacterDef, CharacterRef, ScoreState } from '@pyrgo/
 import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
-import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
+import { setupGameCamera } from '../utils/responsive';
 
 export class LocalGameScene extends Phaser.Scene {
   // Game objects
@@ -139,7 +139,7 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   create(): void {
-    setupResponsiveCamera(this);
+    setupGameCamera(this);
     fadeIn(this);
     this.sound_mgr.enabled = this.game.registry.get('soundOn') !== false;
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -516,8 +516,7 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   private createHUD(): void {
-    const edges = getViewEdges(this);
-    const hudTop = edges.top + 4;
+    const hudTop = 4;
     const meterY = hudTop + 34;
 
     // Score
@@ -962,7 +961,7 @@ export class LocalGameScene extends Phaser.Scene {
       this.timerText.setColor('#ff4444');
       // Show OVERTIME indicator
       if (!this.overtimeText) {
-        this.overtimeText = this.add.text(GAME_WIDTH / 2, getViewEdges(this).top + 55, 'OVERTIME', {
+        this.overtimeText = this.add.text(GAME_WIDTH / 2, 59, 'OVERTIME', {
           fontSize: '12px', fontFamily: 'Arial Black, Arial', color: '#ff4444',
           stroke: '#000000', strokeThickness: 2,
         }).setOrigin(0.5);

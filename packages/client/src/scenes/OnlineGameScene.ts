@@ -32,7 +32,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
+import { setupGameCamera } from '../utils/responsive';
 
 interface ServerSnapshot {
   time: number;
@@ -131,7 +131,7 @@ export class OnlineGameScene extends Phaser.Scene {
   }
 
   create(): void {
-    setupResponsiveCamera(this);
+    setupGameCamera(this);
     fadeIn(this);
     this.sound_mgr.enabled = this.game.registry.get('soundOn') !== false;
     this.stopCrowdAmbient = this.sound_mgr.crowdAmbient();
@@ -309,8 +309,7 @@ export class OnlineGameScene extends Phaser.Scene {
   // HUD
   // ═══════════════════════════════════════════════════
   private createHUD(): void {
-    const edges = getViewEdges(this);
-    const hudTop = edges.top + 4;
+    const hudTop = 4;
     const meterY = hudTop + 34;
 
     this.scoreText = this.add.text(GAME_WIDTH / 2, hudTop, '0 - 0', {
@@ -334,7 +333,7 @@ export class OnlineGameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(100);
 
     // Ping indicator (top right)
-    this.pingIndicator = this.add.text(edges.right - 10, hudTop, '', {
+    this.pingIndicator = this.add.text(GAME_WIDTH - 10, hudTop, '', {
       fontSize: '10px', fontFamily: 'Courier New, monospace', color: '#00ff66',
     }).setOrigin(1, 0).setDepth(10);
 
@@ -346,7 +345,7 @@ export class OnlineGameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(10);
 
     // Exit button
-    createButton(this, edges.left + 40, hudTop + 10, 'EXIT', () => {
+    createButton(this, 40, hudTop + 10, 'EXIT', () => {
       this.showExitConfirmation();
     }, { width: 60, height: 24, fontSize: '10px', fillColor: 0x994444, strokeColor: 0xff4444, depth: 10 });
   }
@@ -418,7 +417,7 @@ export class OnlineGameScene extends Phaser.Scene {
 
       // Overtime display
       if (data.overtime && !this.overtimeText) {
-        this.overtimeText = this.add.text(GAME_WIDTH / 2, getViewEdges(this).top + 55, 'OVERTIME', {
+        this.overtimeText = this.add.text(GAME_WIDTH / 2, 59, 'OVERTIME', {
           fontSize: '14px', fontFamily: 'Arial Black, Arial', color: '#ffdd00',
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(10);

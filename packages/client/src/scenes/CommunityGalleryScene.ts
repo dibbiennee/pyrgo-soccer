@@ -1,13 +1,12 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, SUPER_MOVES, defaultAppearanceForPreset } from '@pyrgo/shared';
+import { SUPER_MOVES, defaultAppearanceForPreset } from '@pyrgo/shared';
 import type { Appearance } from '@pyrgo/shared';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { CharacterApi, type PublishedCharacter } from '../api/CharacterApi';
 import { getDeviceId } from '../storage/DeviceId';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { showToast } from '../ui/ToastNotification';
-import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
+import { CANVAS_W, CANVAS_H } from '../utils/responsive';
 
 const CARDS_PER_PAGE = 6;
 
@@ -26,50 +25,51 @@ export class CommunityGalleryScene extends Phaser.Scene {
   }
 
   create(): void {
-    setupResponsiveCamera(this);
     fadeIn(this);
-    const edges = getViewEdges(this);
+    const W = CANVAS_W;
+    const H = CANVAS_H;
+    const cx = W / 2;
     this.page = 0;
     this.selectedChar = null;
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
+    this.add.rectangle(cx, H / 2, W, H, 0x0d0d1a);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, edges.top + 10, 'COMMUNITY PLAYERS', {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(cx, 25, 'COMMUNITY PLAYERS', {
+      fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
 
     // Status text (loading / error)
-    this.statusText = this.add.text(GAME_WIDTH / 2, 200, 'Loading...', {
-      fontSize: '16px', fontFamily: 'Arial', color: '#888899',
+    this.statusText = this.add.text(cx, 280, 'Loading...', {
+      fontSize: '18px', fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5);
 
     // Grid container
     this.gridContainer = this.add.container(0, 0);
 
-    // Detail container (right side when character selected)
+    // Detail container
     this.detailContainer = this.add.container(0, 0);
 
     // Page navigation
-    const pageY = edges.bottom - 38;
-    this.pageText = this.add.text(GAME_WIDTH / 2, pageY, '', {
-      fontSize: '12px', fontFamily: 'Arial', color: '#888899',
+    const pageY = H - 65;
+    this.pageText = this.add.text(cx, pageY, '', {
+      fontSize: '14px', fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5);
 
-    const prevBg = this.add.rectangle(GAME_WIDTH / 2 - 60, pageY, 40, 24, 0x333355);
+    const prevBg = this.add.rectangle(cx - 80, pageY, 50, 30, 0x333355);
     prevBg.setInteractive({ useHandCursor: true });
-    this.add.text(GAME_WIDTH / 2 - 60, pageY, '<', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+    this.add.text(cx - 80, pageY, '<', {
+      fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     prevBg.on('pointerdown', () => {
       if (this.page > 0) { this.page--; this.showGrid(); }
     });
 
-    const nextBg = this.add.rectangle(GAME_WIDTH / 2 + 60, pageY, 40, 24, 0x333355);
+    const nextBg = this.add.rectangle(cx + 80, pageY, 50, 30, 0x333355);
     nextBg.setInteractive({ useHandCursor: true });
-    this.add.text(GAME_WIDTH / 2 + 60, pageY, '>', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#ffffff',
+    this.add.text(cx + 80, pageY, '>', {
+      fontSize: '16px', fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
     nextBg.on('pointerdown', () => {
       const maxPage = Math.max(0, Math.ceil(this.characters.length / CARDS_PER_PAGE) - 1);
@@ -77,8 +77,8 @@ export class CommunityGalleryScene extends Phaser.Scene {
     });
 
     // Back button
-    createButton(this, edges.left + 55, edges.bottom - 14, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
-      width: 80, height: 30, fontSize: '12px', strokeColor: 0x666666,
+    createButton(this, 80, H - 30, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+      width: 110, height: 36, fontSize: '14px', strokeColor: 0x666666,
     });
 
     // Fetch characters
@@ -87,42 +87,34 @@ export class CommunityGalleryScene extends Phaser.Scene {
 
   private showSkeletonLoading(): void {
     this.gridContainer.removeAll(true);
-    const spacing = 120;
-    const startX = 90;
-    const y = 130;
+    const spacing = 180;
+    const totalW = 5 * spacing;
+    const startX = CANVAS_W / 2 - totalW / 2;
+    const y = 180;
 
     for (let i = 0; i < 6; i++) {
       const x = startX + i * spacing;
       const container = this.add.container(x, y);
       this.gridContainer.add(container);
 
-      const bg = this.add.rectangle(0, 0, 105, 90, 0x222244, 0.6);
+      const bg = this.add.rectangle(0, 0, 120, 110, 0x222244, 0.6);
       bg.setStrokeStyle(1, 0x333355);
       container.add(bg);
 
-      // Shimmer animation
-      const shimmer = this.add.rectangle(0, 0, 105, 90, 0x333366, 0);
+      const shimmer = this.add.rectangle(0, 0, 120, 110, 0x333366, 0);
       container.add(shimmer);
       this.tweens.add({
         targets: shimmer,
         alpha: { from: 0, to: 0.3 },
-        duration: 800,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-        delay: i * 100,
+        duration: 800, yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut', delay: i * 100,
       });
 
-      // Skeleton head circle
-      const head = this.add.arc(0, -15, 10, 0, 360, false, 0x333355, 0.5);
+      const head = this.add.arc(0, -18, 12, 0, 360, false, 0x333355, 0.5);
       container.add(head);
-
-      // Skeleton body
-      const body = this.add.rectangle(0, 5, 20, 25, 0x333355, 0.5);
+      const body = this.add.rectangle(0, 6, 24, 30, 0x333355, 0.5);
       container.add(body);
-
-      // Skeleton name bar
-      const nameBar = this.add.rectangle(0, 35, 50, 8, 0x333355, 0.5);
+      const nameBar = this.add.rectangle(0, 40, 60, 10, 0x333355, 0.5);
       container.add(nameBar);
     }
   }
@@ -155,9 +147,10 @@ export class CommunityGalleryScene extends Phaser.Scene {
     const totalPages = Math.max(1, Math.ceil(this.characters.length / CARDS_PER_PAGE));
     this.pageText.setText(`Page ${this.page + 1} / ${totalPages}`);
 
-    const spacing = 120;
-    const startX = 90;
-    const y = 130;
+    const spacing = 180;
+    const totalW = (Math.min(pageChars.length, 6) - 1) * spacing;
+    const startX = CANVAS_W / 2 - totalW / 2;
+    const y = 180;
 
     pageChars.forEach((char, i) => {
       const x = startX + (i % 6) * spacing;
@@ -169,19 +162,17 @@ export class CommunityGalleryScene extends Phaser.Scene {
     const container = this.add.container(x, y);
     this.gridContainer.add(container);
 
-    const bg = this.add.rectangle(0, 0, 105, 90, 0x2a2a4e);
+    const bg = this.add.rectangle(0, 0, 120, 110, 0x2a2a4e);
     bg.setStrokeStyle(2, 0x444466);
     bg.setInteractive({ useHandCursor: true });
     container.add(bg);
 
-    // Mini preview
     const appearance: Appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
-    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -10, 0.5);
+    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -12, 0.6);
     container.add(preview);
 
-    // Name
-    const name = this.add.text(0, 32, char.name, {
-      fontSize: '10px', fontFamily: 'Arial', color: '#cccccc',
+    const name = this.add.text(0, 40, char.name, {
+      fontSize: '12px', fontFamily: 'Arial', color: '#cccccc',
     }).setOrigin(0.5);
     container.add(name);
 
@@ -193,51 +184,46 @@ export class CommunityGalleryScene extends Phaser.Scene {
   private showDetail(char: PublishedCharacter): void {
     this.detailContainer.removeAll(true);
     this.selectedChar = char;
+    const cx = CANVAS_W / 2;
+    const startY = 340;
 
-    const px = GAME_WIDTH / 2;
-    const startY = 220;
-
-    // Name
-    const nameText = this.add.text(px, startY, char.name, {
-      fontSize: '20px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    const nameText = this.add.text(cx, startY, char.name, {
+      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
     this.detailContainer.add(nameText);
 
-    // Stats
     const bar = (val: number) => '\u2588'.repeat(val) + '\u2591'.repeat(10 - val);
-    const statsY = startY + 28;
-    const statsX = px - 120;
+    const statsY = startY + 35;
+    const statsX = cx - 160;
     const stats = [
       `SPD ${bar(char.stats.speed)} ${char.stats.speed}`,
       `PWR ${bar(char.stats.power)} ${char.stats.power}`,
       `DEF ${bar(char.stats.defense)} ${char.stats.defense}`,
     ];
     stats.forEach((s, i) => {
-      const t = this.add.text(statsX, statsY + i * 18, s, {
-        fontSize: '12px', fontFamily: 'Arial', color: '#aaaacc',
+      const t = this.add.text(statsX, statsY + i * 22, s, {
+        fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
       });
       this.detailContainer.add(t);
     });
 
-    // Super move
     const superInfo = SUPER_MOVES.find(m => m.id === char.superMove);
     if (superInfo) {
-      const superText = this.add.text(px, statsY + 60, `Super: ${superInfo.displayName} \u2014 ${superInfo.description}`, {
-        fontSize: '10px', fontFamily: 'Arial', color: '#888899',
-        wordWrap: { width: 350 },
+      const superText = this.add.text(cx, statsY + 80, `Super: ${superInfo.displayName} \u2014 ${superInfo.description}`, {
+        fontSize: '14px', fontFamily: 'Arial', color: '#888899',
+        wordWrap: { width: 500 },
       }).setOrigin(0.5);
       this.detailContainer.add(superText);
     }
 
-    // If this is the user's character, show delete/make private buttons
     const isOwner = char.creatorDeviceId === getDeviceId();
     if (isOwner) {
-      const toggleBg = this.add.rectangle(px - 60, statsY + 90, 100, 26, 0x442266);
+      const toggleBg = this.add.rectangle(cx - 80, statsY + 120, 130, 32, 0x442266);
       toggleBg.setStrokeStyle(1, 0x8844cc);
       toggleBg.setInteractive({ useHandCursor: true });
-      const toggleText = this.add.text(px - 60, statsY + 90, 'MAKE PRIVATE', {
-        fontSize: '10px', fontFamily: 'Arial', color: '#ffffff',
+      const toggleText = this.add.text(cx - 80, statsY + 120, 'MAKE PRIVATE', {
+        fontSize: '12px', fontFamily: 'Arial', color: '#ffffff',
       }).setOrigin(0.5);
       this.detailContainer.add(toggleBg);
       this.detailContainer.add(toggleText);
@@ -247,11 +233,11 @@ export class CommunityGalleryScene extends Phaser.Scene {
         this.fetchCharacters();
       });
 
-      const delBg = this.add.rectangle(px + 60, statsY + 90, 80, 26, 0x664444);
+      const delBg = this.add.rectangle(cx + 80, statsY + 120, 100, 32, 0x664444);
       delBg.setStrokeStyle(1, 0x884444);
       delBg.setInteractive({ useHandCursor: true });
-      const delText = this.add.text(px + 60, statsY + 90, 'DELETE', {
-        fontSize: '10px', fontFamily: 'Arial', color: '#ff4444',
+      const delText = this.add.text(cx + 80, statsY + 120, 'DELETE', {
+        fontSize: '12px', fontFamily: 'Arial', color: '#ff4444',
       }).setOrigin(0.5);
       this.detailContainer.add(delBg);
       this.detailContainer.add(delText);

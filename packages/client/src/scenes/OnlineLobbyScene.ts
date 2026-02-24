@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import {
-  GAME_WIDTH, GAME_HEIGHT,
   resolveCharacter, defaultAppearanceForPreset,
   SUPER_MOVES,
 } from '@pyrgo/shared';
@@ -10,7 +9,7 @@ import { SocketManager } from '../network/SocketManager';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
+import { CANVAS_W, CANVAS_H } from '../utils/responsive';
 
 export class OnlineLobbyScene extends Phaser.Scene {
   private socket!: SocketManager;
@@ -42,30 +41,31 @@ export class OnlineLobbyScene extends Phaser.Scene {
   }
 
   create(): void {
-    setupResponsiveCamera(this);
     fadeIn(this);
-    const edges = getViewEdges(this);
+    const W = CANVAS_W;
+    const H = CANVAS_H;
+    const cx = W / 2;
 
     const sm = SoundManager.getInstance();
     sm.enabled = this.game.registry.get('soundOn') !== false;
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e);
+    this.add.rectangle(cx, H / 2, W, H, 0x1a1a2e);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, edges.top + 10, 'MATCH LOBBY', {
-      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(cx, 25, 'MATCH LOBBY', {
+      fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Room code
-    this.add.text(GAME_WIDTH / 2, edges.top + 35, `Room: ${this.roomCode}`, {
-      fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#666688',
+    this.add.text(cx, 55, `Room: ${this.roomCode}`, {
+      fontSize: '14px', fontFamily: 'Courier New, monospace', color: '#666688',
     }).setOrigin(0.5);
 
     // ─── Player displays ──────────────────────────────
-    const p1X = GAME_WIDTH * 0.25;
-    const p2X = GAME_WIDTH * 0.75;
-    const charY = 180;
+    const p1X = W * 0.25;
+    const p2X = W * 0.75;
+    const charY = 260;
 
     for (let idx = 0; idx < 2; idx++) {
       const playerInfo = this.players.find(p => p.playerIndex === idx + 1);
@@ -76,44 +76,41 @@ export class OnlineLobbyScene extends Phaser.Scene {
         const char = resolveCharacter(playerInfo.charRef);
         const appearance = char.appearance ?? defaultAppearanceForPreset(char.id);
 
-        // Character preview
-        CharacterRenderer.renderMiniPreview(this, appearance, px, charY, 1.5);
+        CharacterRenderer.renderMiniPreview(this, appearance, px, charY, 1.8);
 
-        // Name
-        this.add.text(px, charY + 65, char.name, {
-          fontSize: '18px', fontFamily: 'Arial Black, Arial', color,
+        this.add.text(px, charY + 80, char.name, {
+          fontSize: '20px', fontFamily: 'Arial Black, Arial', color,
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5);
 
-        // Player name
-        this.add.text(px, charY + 88, playerInfo.playerName, {
-          fontSize: '12px', fontFamily: 'Arial', color: '#aaaacc',
+        this.add.text(px, charY + 108, playerInfo.playerName, {
+          fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
         }).setOrigin(0.5);
 
         // Stats bars
-        const statsY = charY + 105;
+        const statsY = charY + 130;
         const bar = (val: number) => '\u2588'.repeat(val) + '\u2591'.repeat(10 - val);
         this.add.text(px, statsY, `SPD ${bar(char.stats.speed)}`, {
-          fontSize: '9px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
+          fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
         }).setOrigin(0.5);
-        this.add.text(px, statsY + 14, `PWR ${bar(char.stats.power)}`, {
-          fontSize: '9px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
+        this.add.text(px, statsY + 18, `PWR ${bar(char.stats.power)}`, {
+          fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
         }).setOrigin(0.5);
-        this.add.text(px, statsY + 28, `DEF ${bar(char.stats.defense)}`, {
-          fontSize: '9px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
+        this.add.text(px, statsY + 36, `DEF ${bar(char.stats.defense)}`, {
+          fontSize: '12px', fontFamily: 'Courier New, monospace', color: '#aaaaaa',
         }).setOrigin(0.5);
 
         // Super move info
         const superInfo = SUPER_MOVES.find(m => m.id === char.superMove);
         if (superInfo) {
-          this.add.text(px, statsY + 48, `Super: ${superInfo.displayName}`, {
-            fontSize: '10px', fontFamily: 'Arial', color: '#ffaa00',
+          this.add.text(px, statsY + 62, `Super: ${superInfo.displayName}`, {
+            fontSize: '14px', fontFamily: 'Arial', color: '#ffaa00',
           }).setOrigin(0.5);
         }
 
         // Ready indicator
-        const readyText = this.add.text(px, charY - 55, '', {
-          fontSize: '20px', fontFamily: 'Arial', color: '#00ff66',
+        const readyText = this.add.text(px, charY - 70, '', {
+          fontSize: '22px', fontFamily: 'Arial', color: '#00ff66',
         }).setOrigin(0.5);
         this.readyIndicators[idx] = readyText;
 
@@ -122,40 +119,40 @@ export class OnlineLobbyScene extends Phaser.Scene {
         }
       } else {
         this.add.text(px, charY, '?', {
-          fontSize: '48px', fontFamily: 'Arial', color: '#444466',
+          fontSize: '52px', fontFamily: 'Arial', color: '#444466',
         }).setOrigin(0.5);
-        this.add.text(px, charY + 50, 'Waiting...', {
-          fontSize: '14px', fontFamily: 'Arial', color: '#666688',
+        this.add.text(px, charY + 60, 'Waiting...', {
+          fontSize: '16px', fontFamily: 'Arial', color: '#666688',
         }).setOrigin(0.5);
       }
     }
 
     // VS text
-    this.add.text(GAME_WIDTH / 2, charY, 'VS', {
-      fontSize: '48px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    this.add.text(cx, charY, 'VS', {
+      fontSize: '52px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 6,
     }).setOrigin(0.5).setAlpha(0.5);
 
     // ─── READY button ─────────────────────────────────
-    this.readyBtn = createButton(this, GAME_WIDTH / 2, edges.bottom - 38, 'PRONTO', () => {
+    this.readyBtn = createButton(this, cx, H - 60, 'PRONTO', () => {
       if (this.imReady) return;
       this.imReady = true;
       sm.menuClick();
       this.socket.emit('PLAYER_READY', {});
       this.readyBtn!.label.setText('WAITING...');
       this.readyBtn!.bg.setFillStyle(0x444466);
-    }, { width: 180, height: 42, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
+    }, { width: 220, height: 48, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 
     // Back button
-    createButton(this, edges.left + 60, edges.bottom - 15, '\u2190 LEAVE', () => {
+    createButton(this, 80, H - 30, '\u2190 LEAVE', () => {
       this.socket.emit('ROOM_LEAVE', {});
       this.cleanup();
       transitionTo(this, 'OnlineHub', { charRef: this.charRef });
-    }, { width: 90, height: 30, fontSize: '12px', strokeColor: 0x666666 });
+    }, { width: 120, height: 36, fontSize: '14px', strokeColor: 0x666666 });
 
     // Countdown text (hidden initially)
-    this.countdownText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
-      fontSize: '72px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    this.countdownText = this.add.text(cx, H / 2, '', {
+      fontSize: '80px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 8,
     }).setOrigin(0.5).setDepth(100).setVisible(false);
 
@@ -183,7 +180,6 @@ export class OnlineLobbyScene extends Phaser.Scene {
           duration: 300,
         });
       } else {
-        // Countdown = 0 → transition to game
         this.countdownText?.setText('GO!').setColor('#ffdd00');
         SoundManager.getInstance().countdown();
         this.tweens.add({
@@ -193,7 +189,6 @@ export class OnlineLobbyScene extends Phaser.Scene {
           duration: 500,
         });
 
-        // Get both charRefs for VsScreen
         const p1Info = this.players.find(p => p.playerIndex === 1);
         const p2Info = this.players.find(p => p.playerIndex === 2);
         const charRef1 = p1Info?.charRef ?? { type: 'preset' as const, id: 1 };
@@ -220,7 +215,6 @@ export class OnlineLobbyScene extends Phaser.Scene {
     this.socket.on('ROOM_PLAYER_JOINED', (data: { player: LobbyPlayerInfo }) => {
       SoundManager.getInstance().notificationPing();
       this.players.push(data.player);
-      // Refresh scene
       this.cleanup();
       this.scene.restart({
         players: this.players,

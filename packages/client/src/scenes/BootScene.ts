@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
+import { CANVAS_W, CANVAS_H } from '../utils/responsive';
 import { SoundManager } from '../audio/SoundManager';
-import { setupResponsiveCamera } from '../utils/responsive';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -9,16 +8,15 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    setupResponsiveCamera(this);
-    const width = GAME_WIDTH;
-    const height = GAME_HEIGHT;
+    const cx = CANVAS_W / 2;
+    const cy = CANVAS_H / 2;
 
     // Background
-    this.add.rectangle(width / 2, height / 2, width, height, 0x0d0d1a);
+    this.add.rectangle(cx, cy, CANVAS_W, CANVAS_H, 0x0d0d1a);
 
     // Logo "PYRGO SOCCER" above the loading bar
-    const logo = this.add.text(width / 2, height / 2 - 70, 'PYRGO SOCCER', {
-      fontSize: '42px',
+    const logo = this.add.text(cx, cy - 80, 'PYRGO SOCCER', {
+      fontSize: '40px',
       fontFamily: 'Arial Black, Arial',
       color: '#00ccff',
       stroke: '#000000',
@@ -38,12 +36,12 @@ export class BootScene extends Phaser.Scene {
     // Progress bar
     const progressBox = this.add.graphics();
     progressBox.fillStyle(0x222244, 0.8);
-    progressBox.fillRoundedRect(width / 2 - 160, height / 2 - 12, 320, 24, 4);
+    progressBox.fillRoundedRect(cx - 200, cy - 14, 400, 28, 4);
 
     const progressBar = this.add.graphics();
 
-    const loadingText = this.add.text(width / 2, height / 2 + 25, 'Loading...', {
-      fontSize: '14px',
+    const loadingText = this.add.text(cx, cy + 30, 'Loading...', {
+      fontSize: '16px',
       fontFamily: 'Arial',
       color: '#888899',
     }).setOrigin(0.5);
@@ -51,7 +49,7 @@ export class BootScene extends Phaser.Scene {
     this.load.on('progress', (value: number) => {
       progressBar.clear();
       progressBar.fillStyle(0x00ccff, 1);
-      progressBar.fillRoundedRect(width / 2 - 155, height / 2 - 8, 310 * value, 16, 3);
+      progressBar.fillRoundedRect(cx - 195, cy - 10, 390 * value, 20, 3);
     });
 
     this.load.on('complete', () => {

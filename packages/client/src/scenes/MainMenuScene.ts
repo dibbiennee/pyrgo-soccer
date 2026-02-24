@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
+import { CANVAS_W, CANVAS_H } from '../utils/responsive';
 import { SoundManager } from '../audio/SoundManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
 
 declare const __APP_VERSION__: string;
 
@@ -16,30 +15,31 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    setupResponsiveCamera(this);
     fadeIn(this);
-    const edges = getViewEdges(this);
+    const W = CANVAS_W;
+    const H = CANVAS_H;
+    const cx = W / 2;
 
     // ── Background ──────────────────────────────────
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0d0d1a);
+    this.add.rectangle(cx, H / 2, W, H, 0x0d0d1a);
 
     // Stylised field gradient (bottom half)
     const fieldGfx = this.add.graphics();
     fieldGfx.fillStyle(0x0a2a15, 1);
-    fieldGfx.fillRect(0, GAME_HEIGHT * 0.6, GAME_WIDTH, GAME_HEIGHT * 0.4);
+    fieldGfx.fillRect(0, H * 0.6, W, H * 0.4);
     fieldGfx.fillStyle(0x0c3318, 0.5);
-    fieldGfx.fillRect(0, GAME_HEIGHT * 0.6, GAME_WIDTH, 2);
+    fieldGfx.fillRect(0, H * 0.6, W, 2);
 
     // Field markings (subtle)
     const markGfx = this.add.graphics();
     markGfx.lineStyle(1, 0xffffff, 0.08);
-    markGfx.lineBetween(GAME_WIDTH / 2, GAME_HEIGHT * 0.65, GAME_WIDTH / 2, GAME_HEIGHT);
-    markGfx.strokeCircle(GAME_WIDTH / 2, GAME_HEIGHT * 0.82, 40);
+    markGfx.lineBetween(cx, H * 0.65, cx, H);
+    markGfx.strokeCircle(cx, H * 0.82, 60);
 
     // Floating particles (star-like)
     for (let i = 0; i < 20; i++) {
-      const px = Math.random() * GAME_WIDTH;
-      const py = Math.random() * GAME_HEIGHT * 0.55;
+      const px = Math.random() * W;
+      const py = Math.random() * H * 0.55;
       const size = 1 + Math.random() * 2;
       const p = this.add.arc(px, py, size, 0, 360, false, 0x00ccff, 0.15 + Math.random() * 0.3);
       this.tweens.add({
@@ -56,15 +56,14 @@ export class MainMenuScene extends Phaser.Scene {
     }
 
     // ── Logo ────────────────────────────────────────
-    const title = this.add.text(GAME_WIDTH / 2, 75, 'PYRGO SOCCER', {
-      fontSize: '48px',
+    const title = this.add.text(cx, 110, 'PYRGO SOCCER', {
+      fontSize: '40px',
       fontFamily: 'Arial Black, Arial',
       color: '#00ccff',
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5).setScale(0);
 
-    // Scale-in with Back.easeOut
     this.tweens.add({
       targets: title,
       scale: 1,
@@ -72,7 +71,6 @@ export class MainMenuScene extends Phaser.Scene {
       ease: 'Back.easeOut',
     });
 
-    // Pulsing glow effect on title
     this.tweens.add({
       targets: title,
       alpha: { from: 0.85, to: 1 },
@@ -84,8 +82,8 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     // Subtitle
-    const subtitle = this.add.text(GAME_WIDTH / 2, 120, 'Head Soccer Battle!', {
-      fontSize: '18px',
+    const subtitle = this.add.text(cx, 165, 'Head Soccer Battle!', {
+      fontSize: '20px',
       fontFamily: 'Arial',
       color: '#aaaacc',
     }).setOrigin(0.5).setAlpha(0);
@@ -98,11 +96,11 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     // Bouncing ball decoration
-    const ball = this.add.arc(GAME_WIDTH / 2, 190, 12, 0, 360, false, 0xffffff);
+    const ball = this.add.arc(cx, 225, 14, 0, 360, false, 0xffffff);
     ball.setStrokeStyle(2, 0x333333);
     this.tweens.add({
       targets: ball,
-      y: 175,
+      y: 210,
       duration: 500,
       yoyo: true,
       repeat: -1,
@@ -110,38 +108,38 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     // ── Buttons ─────────────────────────────────────
-    const leftX = GAME_WIDTH / 2 - 120;
-    const rightX = GAME_WIDTH / 2 + 120;
+    const leftX = cx - 180;
+    const rightX = cx + 180;
 
     // Left column (play modes)
-    createButton(this, leftX, 230, 'VS CPU', () => {
+    createButton(this, leftX, 320, 'VS CPU', () => {
       transitionTo(this, 'CharSelect', { mode: 'cpu' });
-    }, { width: 220, height: 44 });
+    }, { width: 240, height: 48 });
 
-    createButton(this, leftX, 280, 'LOCAL MATCH', () => {
+    createButton(this, leftX, 385, 'LOCAL MATCH', () => {
       transitionTo(this, 'CharSelect', { mode: 'local' });
-    }, { width: 220, height: 44 });
+    }, { width: 240, height: 48 });
 
-    createButton(this, leftX, 330, 'ONLINE MATCH', () => {
+    createButton(this, leftX, 450, 'ONLINE MATCH', () => {
       transitionTo(this, 'CharSelect', { mode: 'online' });
-    }, { width: 220, height: 44 });
+    }, { width: 240, height: 48 });
 
     // Right column (character + community + how to play)
-    createButton(this, rightX, 230, 'CREATE PLAYER', () => {
+    createButton(this, rightX, 320, 'CREATE PLAYER', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'MainMenu' });
-    }, { width: 220, height: 44 });
+    }, { width: 240, height: 48 });
 
-    createButton(this, rightX, 280, 'COMMUNITY', () => {
+    createButton(this, rightX, 385, 'COMMUNITY', () => {
       transitionTo(this, 'CommunityGallery');
-    }, { width: 220, height: 44 });
+    }, { width: 240, height: 48 });
 
-    createButton(this, rightX, 330, 'HOW TO PLAY', () => {
+    createButton(this, rightX, 450, 'HOW TO PLAY', () => {
       transitionTo(this, 'HowToPlay');
-    }, { width: 220, height: 44 });
+    }, { width: 240, height: 48 });
 
     // ── Gear icon (Settings) — top right ────────────
-    const gearText = this.add.text(edges.right - 15, edges.top + 15, '\u2699', {
-      fontSize: '28px', fontFamily: 'Arial', color: '#666688',
+    const gearText = this.add.text(W - 30, 25, '\u2699', {
+      fontSize: '32px', fontFamily: 'Arial', color: '#666688',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     gearText.on('pointerover', () => gearText.setColor('#00ccff'));
@@ -153,8 +151,8 @@ export class MainMenuScene extends Phaser.Scene {
 
     // ── Version/Credits ─────────────────────────────
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
-    this.add.text(GAME_WIDTH / 2, edges.bottom - 8, `v${version}  |  PYRGO GAMES`, {
-      fontSize: '10px',
+    this.add.text(cx, H - 15, `v${version}  |  PYRGO GAMES`, {
+      fontSize: '14px',
       fontFamily: 'Arial',
       color: '#444466',
     }).setOrigin(0.5, 1);
@@ -165,20 +163,22 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private showSettings(): void {
-    // Destroy any existing settings
     this.destroySettings();
+    const W = CANVAS_W;
+    const H = CANVAS_H;
+    const cx = W / 2;
 
-    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.85)
+    const overlay = this.add.rectangle(cx, H / 2, W, H, 0x000000, 0.85)
       .setDepth(50).setInteractive();
 
-    const titleText = this.add.text(GAME_WIDTH / 2, 70, 'SETTINGS', {
-      fontSize: '32px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    const titleText = this.add.text(cx, 120, 'SETTINGS', {
+      fontSize: '36px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
     }).setOrigin(0.5).setDepth(51);
 
     // Sound toggle
     const sm = SoundManager.getInstance();
-    const soundBtn = this.add.text(GAME_WIDTH / 2, 150, `Sound: ${sm.enabled ? 'ON' : 'OFF'}`, {
-      fontSize: '20px', fontFamily: 'Arial', color: '#ffffff',
+    const soundBtn = this.add.text(cx, 220, `Sound: ${sm.enabled ? 'ON' : 'OFF'}`, {
+      fontSize: '24px', fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5).setDepth(51).setInteractive({ useHandCursor: true });
 
     soundBtn.on('pointerdown', () => {
@@ -196,23 +196,23 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Version display
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0';
-    const versionText = this.add.text(GAME_WIDTH / 2, 200, `Version: ${version}`, {
-      fontSize: '14px', fontFamily: 'Arial', color: '#888899',
+    const versionText = this.add.text(cx, 280, `Version: ${version}`, {
+      fontSize: '16px', fontFamily: 'Arial', color: '#888899',
     }).setOrigin(0.5).setDepth(51);
 
     // Reset Data button
-    const resetBtn = createButton(this, GAME_WIDTH / 2, 250, 'RESET DATA', () => {
+    const resetBtn = createButton(this, cx, 350, 'RESET DATA', () => {
       this.showResetConfirm();
-    }, { width: 180, height: 36, depth: 52, fillColor: 0x994444, strokeColor: 0xff4444 });
+    }, { width: 220, height: 42, depth: 52, fillColor: 0x994444, strokeColor: 0xff4444 });
 
     // Credits button
-    const creditsBtn = createButton(this, GAME_WIDTH / 2, 300, 'CREDITS', () => {
+    const creditsBtn = createButton(this, cx, 420, 'CREDITS', () => {
       this.destroySettings();
       transitionTo(this, 'Credits');
-    }, { depth: 52, width: 180, height: 36 });
+    }, { depth: 52, width: 220, height: 42 });
 
     // Close
-    const closeBtn = createButton(this, GAME_WIDTH / 2, 360, '\u2190 BACK', () => {
+    const closeBtn = createButton(this, cx, 510, '\u2190 BACK', () => {
       this.destroySettings();
     }, { depth: 52 });
 
@@ -220,29 +220,31 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private showResetConfirm(): void {
-    const confirmOverlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.9)
+    const cx = CANVAS_W / 2;
+
+    const confirmOverlay = this.add.rectangle(cx, CANVAS_H / 2, CANVAS_W, CANVAS_H, 0x000000, 0.9)
       .setDepth(60).setInteractive();
 
-    const confirmText = this.add.text(GAME_WIDTH / 2, 160, 'Reset all data?\nThis cannot be undone.', {
-      fontSize: '18px', fontFamily: 'Arial', color: '#ff4444', align: 'center',
+    const confirmText = this.add.text(cx, 260, 'Reset all data?\nThis cannot be undone.', {
+      fontSize: '22px', fontFamily: 'Arial', color: '#ff4444', align: 'center',
     }).setOrigin(0.5).setDepth(61);
 
     const confirmElements: Phaser.GameObjects.GameObject[] = [confirmOverlay, confirmText];
 
-    const yesBtn = createButton(this, GAME_WIDTH / 2 - 80, 230, 'YES, RESET', () => {
+    const yesBtn = createButton(this, cx - 120, 360, 'YES, RESET', () => {
       localStorage.clear();
       confirmElements.forEach(e => e.destroy());
       yesBtn.container.destroy();
       noBtn.container.destroy();
       this.destroySettings();
       this.scene.restart();
-    }, { width: 140, height: 36, depth: 62, fillColor: 0x994444, strokeColor: 0xff4444 });
+    }, { width: 180, height: 42, depth: 62, fillColor: 0x994444, strokeColor: 0xff4444 });
 
-    const noBtn = createButton(this, GAME_WIDTH / 2 + 80, 230, 'CANCEL', () => {
+    const noBtn = createButton(this, cx + 120, 360, 'CANCEL', () => {
       confirmElements.forEach(e => e.destroy());
       yesBtn.container.destroy();
       noBtn.container.destroy();
-    }, { width: 140, height: 36, depth: 62 });
+    }, { width: 180, height: 42, depth: 62 });
 
     confirmElements.push(yesBtn.container, noBtn.container);
   }

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  GAME_WIDTH, GAME_HEIGHT, CHARACTERS,
+  CHARACTERS,
   SUPER_MOVES,
   defaultAppearanceForPreset,
 } from '@pyrgo/shared';
@@ -10,21 +10,19 @@ import { CharacterStorage } from '../storage/CharacterStorage';
 import { CharacterApi, type PublishedCharacter } from '../api/CharacterApi';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton } from '../ui/ButtonFactory';
-import { setupResponsiveCamera, getViewEdges } from '../utils/responsive';
+import { CANVAS_W, CANVAS_H } from '../utils/responsive';
 
 type SelectTab = 'mine' | 'preset' | 'community';
 
 export class CharSelectScene extends Phaser.Scene {
   private mode: 'local' | 'online' | 'cpu' = 'local';
-  private activePlayer = 1; // which player is choosing (1 or 2)
+  private activePlayer = 1;
   private activeTab: SelectTab = 'preset';
   private communityChars: PublishedCharacter[] = [];
 
-  // Selections stored as CharacterRef
   private selection1: CharacterRef = { type: 'preset', id: 1 };
   private selection2: CharacterRef = { type: 'preset', id: 2 };
 
-  // UI containers
   private gridContainer!: Phaser.GameObjects.Container;
   private previewContainer!: Phaser.GameObjects.Container;
   private tabButtons: Map<SelectTab, { bg: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text }> = new Map();
@@ -42,26 +40,26 @@ export class CharSelectScene extends Phaser.Scene {
     this.activePlayer = 1;
     this.selection1 = { type: 'preset', id: 1 };
     this.selection2 = { type: 'preset', id: 2 };
-    // Default to "mine" tab if user has custom characters, else "preset"
     this.activeTab = CharacterStorage.count() > 0 ? 'mine' : 'preset';
   }
 
   create(): void {
-    setupResponsiveCamera(this);
     fadeIn(this);
-    const edges = getViewEdges(this);
+    const W = CANVAS_W;
+    const H = CANVAS_H;
+    const cx = W / 2;
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e);
+    this.add.rectangle(cx, H / 2, W, H, 0x1a1a2e);
 
     // Title
-    this.add.text(GAME_WIDTH / 2, edges.top + 8, 'SELECT YOUR FIGHTER', {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
+    this.add.text(cx, 25, 'SELECT YOUR FIGHTER', {
+      fontSize: '28px', fontFamily: 'Arial Black, Arial', color: '#00ccff',
       stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
     // Selection indicator
-    this.selectionIndicator = this.add.text(GAME_WIDTH / 2, edges.top + 28, 'Player 1 \u2014 Choose!', {
-      fontSize: '14px', fontFamily: 'Arial', color: '#ffaa00',
+    this.selectionIndicator = this.add.text(cx, 55, 'Player 1 \u2014 Choose!', {
+      fontSize: '16px', fontFamily: 'Arial', color: '#ffaa00',
     }).setOrigin(0.5);
 
     // ── Tabs ─────────────────────────────────────
@@ -72,44 +70,44 @@ export class CharSelectScene extends Phaser.Scene {
     this.showGrid();
 
     // ── Preview area ─────────────────────────────
-    this.previewContainer = this.add.container(GAME_WIDTH / 2, 340);
+    this.previewContainer = this.add.container(cx, 510);
 
-    this.nameText = this.add.text(0, -55, '', {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
+    this.nameText = this.add.text(0, -60, '', {
+      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3,
     }).setOrigin(0.5);
     this.previewContainer.add(this.nameText);
 
-    const statsX = -180;
+    const statsX = -260;
     this.statsTexts = {
-      speed: this.add.text(statsX, -25, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
-      power: this.add.text(statsX, -3, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
-      defense: this.add.text(statsX, 19, '', { fontSize: '14px', fontFamily: 'Arial', color: '#ffffff' }),
+      speed: this.add.text(statsX, -30, '', { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff' }),
+      power: this.add.text(statsX, -6, '', { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff' }),
+      defense: this.add.text(statsX, 18, '', { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff' }),
     };
     this.previewContainer.add(this.statsTexts.speed);
     this.previewContainer.add(this.statsTexts.power);
     this.previewContainer.add(this.statsTexts.defense);
 
-    this.superText = this.add.text(0, 45, '', {
-      fontSize: '11px', fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: 380 },
+    this.superText = this.add.text(0, 50, '', {
+      fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc', wordWrap: { width: 600 },
     }).setOrigin(0.5);
     this.previewContainer.add(this.superText);
 
     this.updatePreview();
 
     // ── Bottom buttons ───────────────────────────
-    createButton(this, GAME_WIDTH / 2, edges.bottom - 18, 'CONFIRM', () => this.confirmSelection(), {
-      width: 160, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66,
+    createButton(this, cx, H - 35, 'CONFIRM', () => this.confirmSelection(), {
+      width: 200, height: 42, fillColor: 0x00aa44, strokeColor: 0x00ff66,
     });
 
-    createButton(this, edges.left + 55, edges.bottom - 18, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
-      width: 80, height: 30, fontSize: '12px', strokeColor: 0x666666,
+    createButton(this, 80, H - 35, '\u2190 BACK', () => transitionTo(this, 'MainMenu'), {
+      width: 110, height: 36, fontSize: '14px', strokeColor: 0x666666,
     });
 
-    createButton(this, edges.right - 70, edges.bottom - 18, '+ CREATE', () => {
+    createButton(this, W - 100, H - 35, '+ CREATE', () => {
       transitionTo(this, 'CharacterCreator', { returnTo: 'CharSelect' });
     }, {
-      width: 110, height: 30, fontSize: '12px', fillColor: 0x225588, strokeColor: 0x44aaff,
+      width: 140, height: 36, fontSize: '14px', fillColor: 0x225588, strokeColor: 0x44aaff,
     });
   }
 
@@ -123,19 +121,18 @@ export class CharSelectScene extends Phaser.Scene {
       { key: 'community', label: 'COMMUNITY' },
     ];
 
-    const tabW = 110;
-    const startX = GAME_WIDTH / 2 - (tabs.length * (tabW + 6)) / 2 + tabW / 2;
-    const tabEdges = getViewEdges(this);
-    const y = tabEdges.top + 42;
+    const tabW = 160;
+    const startX = CANVAS_W / 2 - (tabs.length * (tabW + 8)) / 2 + tabW / 2;
+    const y = 85;
 
     tabs.forEach((tab, i) => {
-      const x = startX + i * (tabW + 6);
-      const bg = this.add.rectangle(x, y, tabW, 24, 0x2a2a4e);
+      const x = startX + i * (tabW + 8);
+      const bg = this.add.rectangle(x, y, tabW, 30, 0x2a2a4e);
       bg.setStrokeStyle(1, 0x444466);
       bg.setInteractive({ useHandCursor: true });
 
       const label = this.add.text(x, y, tab.label, {
-        fontSize: '11px', fontFamily: 'Arial', color: '#aaaacc',
+        fontSize: '14px', fontFamily: 'Arial', color: '#aaaacc',
       }).setOrigin(0.5);
 
       bg.on('pointerdown', () => {
@@ -184,9 +181,11 @@ export class CharSelectScene extends Phaser.Scene {
   }
 
   private buildPresetGrid(): void {
-    const spacing = 120;
-    const startX = 90;
-    const y = 150;
+    const count = CHARACTERS.length;
+    const spacing = 180;
+    const totalW = (count - 1) * spacing;
+    const startX = CANVAS_W / 2 - totalW / 2;
+    const y = 220;
 
     CHARACTERS.forEach((char, i) => {
       const x = startX + i * spacing;
@@ -196,18 +195,20 @@ export class CharSelectScene extends Phaser.Scene {
 
   private buildMyCharsGrid(): void {
     const customs = CharacterStorage.getAll();
-    const spacing = 120;
-    const startX = 90;
-    const y = 150;
+    const spacing = 180;
+    const y = 220;
 
     if (customs.length === 0) {
-      const emptyText = this.add.text(GAME_WIDTH / 2, y, 'No custom characters yet.\nTap "+ CREATE" to make one!', {
-        fontSize: '14px', fontFamily: 'Arial', color: '#666688',
+      const emptyText = this.add.text(CANVAS_W / 2, y, 'No custom characters yet.\nTap "+ CREATE" to make one!', {
+        fontSize: '16px', fontFamily: 'Arial', color: '#666688',
         align: 'center',
       }).setOrigin(0.5);
       this.gridContainer.add(emptyText);
       return;
     }
+
+    const totalW = (customs.length - 1) * spacing;
+    const startX = CANVAS_W / 2 - totalW / 2;
 
     customs.forEach((char, i) => {
       const x = startX + i * spacing;
@@ -217,8 +218,8 @@ export class CharSelectScene extends Phaser.Scene {
 
   private buildCommunityGrid(): void {
     if (this.communityChars.length === 0) {
-      const loadingText = this.add.text(GAME_WIDTH / 2, 150, 'Loading community...', {
-        fontSize: '14px', fontFamily: 'Arial', color: '#666688',
+      const loadingText = this.add.text(CANVAS_W / 2, 220, 'Loading community...', {
+        fontSize: '16px', fontFamily: 'Arial', color: '#666688',
       }).setOrigin(0.5);
       this.gridContainer.add(loadingText);
 
@@ -231,19 +232,21 @@ export class CharSelectScene extends Phaser.Scene {
       return;
     }
 
-    const spacing = 120;
-    const startX = 90;
-    const y = 150;
+    const spacing = 180;
+    const y = 220;
+    const visibleChars = this.communityChars.slice(0, 6);
+    const totalW = (visibleChars.length - 1) * spacing;
+    const startX = CANVAS_W / 2 - totalW / 2;
 
-    if (this.communityChars.length === 0) {
-      const text = this.add.text(GAME_WIDTH / 2, y, 'No community characters yet.', {
-        fontSize: '14px', fontFamily: 'Arial', color: '#666688',
+    if (visibleChars.length === 0) {
+      const text = this.add.text(CANVAS_W / 2, y, 'No community characters yet.', {
+        fontSize: '16px', fontFamily: 'Arial', color: '#666688',
       }).setOrigin(0.5);
       this.gridContainer.add(text);
       return;
     }
 
-    this.communityChars.slice(0, 6).forEach((char, i) => {
+    visibleChars.forEach((char, i) => {
       const x = startX + i * spacing;
       this.createCharCard(x, y, char.name, char as unknown as CharacterDef, { type: 'custom', data: char as unknown as CustomCharacterDef });
     });
@@ -255,17 +258,17 @@ export class CharSelectScene extends Phaser.Scene {
 
     const isSelected = this.isRefSelected(ref);
 
-    const bg = this.add.rectangle(0, 0, 105, 90, 0x2a2a4e);
+    const bg = this.add.rectangle(0, 0, 120, 110, 0x2a2a4e);
     bg.setStrokeStyle(2, isSelected ? (this.activePlayer === 1 ? 0x00ccff : 0xff4444) : 0x444466);
     bg.setInteractive({ useHandCursor: true });
     container.add(bg);
 
     const appearance: Appearance = charDef.appearance ?? defaultAppearanceForPreset(charDef.id);
-    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -10, 0.5);
+    const preview = CharacterRenderer.renderMiniPreview(this, appearance, 0, -12, 0.6);
     container.add(preview);
 
-    const nameLabel = this.add.text(0, 35, name, {
-      fontSize: '10px', fontFamily: 'Arial', color: '#cccccc',
+    const nameLabel = this.add.text(0, 42, name, {
+      fontSize: '12px', fontFamily: 'Arial', color: '#cccccc',
     }).setOrigin(0.5);
     container.add(nameLabel);
 
@@ -328,7 +331,6 @@ export class CharSelectScene extends Phaser.Scene {
         this.showGrid();
         this.updatePreview();
       } else {
-        // Route through VS screen
         transitionTo(this, 'VsScreen', {
           charRef1: this.selection1,
           charRef2: this.selection2,
@@ -337,14 +339,12 @@ export class CharSelectScene extends Phaser.Scene {
       }
     } else if (this.mode === 'cpu') {
       const cpuIndex = Math.floor(Math.random() * CHARACTERS.length);
-      // Route through VS screen
       transitionTo(this, 'VsScreen', {
         charRef1: this.selection1,
         charRef2: { type: 'preset' as const, id: CHARACTERS[cpuIndex].id },
         targetScene: 'CpuGame',
       });
     } else {
-      // Online — single selection, go to OnlineHub
       transitionTo(this, 'OnlineHub', { charRef: this.selection1 });
     }
   }

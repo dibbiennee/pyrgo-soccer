@@ -13,7 +13,7 @@ import { CommunityGalleryScene } from './scenes/CommunityGalleryScene';
 import { VsScreen } from './scenes/VsScreen';
 import { HowToPlayScene } from './scenes/HowToPlayScene';
 import { CreditsScene } from './scenes/CreditsScene';
-import { GAME_WIDTH, GAME_HEIGHT } from '@pyrgo/shared';
+import { CANVAS_W, CANVAS_H } from './utils/responsive';
 
 // ─── Global error handlers ─────────────────────────
 window.onerror = (_msg, _src, _line, _col, _err) => {
@@ -80,12 +80,12 @@ SocketManager.getInstance().on('SERVER_SHUTDOWN', () => {
 // ─── Phaser game ───────────────────────────────────
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
+  width: CANVAS_W,
+  height: CANVAS_H,
   parent: 'game-container',
-  backgroundColor: '#000008',
+  backgroundColor: '#1a1a2e',
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   physics: {
