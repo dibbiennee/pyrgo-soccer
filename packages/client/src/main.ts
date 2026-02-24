@@ -75,6 +75,22 @@ SocketManager.getInstance().on('SERVER_SHUTDOWN', () => {
   document.body.appendChild(overlay);
 });
 
+// ─── Service Worker update listener ─────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(registration => {
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            window.location.reload();
+          }
+        });
+      }
+    });
+  });
+}
+
 // ─── Phaser game ───────────────────────────────────
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
