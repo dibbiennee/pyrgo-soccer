@@ -88,12 +88,6 @@ export class CharacterCreatorScene extends Phaser.Scene {
     // Background
     this.add.rectangle(L.cx, L.cy, L.w, L.h, 0x0d0d1a);
 
-    // Title
-    this.add.text(L.cx, L.y(0.03), this.editIndex !== null ? 'EDIT CHARACTER' : 'CREATE CHARACTER', {
-      fontSize: L.fontSize('body'), fontFamily: 'Arial Black, Arial', color: '#00ccff',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5);
-
     // ── Live Preview (left) ────────────────────────
     const previewBoxW = L.w * 0.18;
     const previewBoxH = L.h * 0.55;
@@ -136,10 +130,10 @@ export class CharacterCreatorScene extends Phaser.Scene {
   private createTabs(): void {
     const L = this.L;
     const tabW = L.w * 0.09;
-    const tabH = L.unit(0.06);
+    const tabH = 28;
     const gap = L.unit(0.015);
     const startX = L.x(0.27);
-    const y = L.y(0.09);
+    const y = L.y(0.04);
 
     TABS.forEach((tab, i) => {
       const x = startX + i * (tabW + gap);
@@ -570,8 +564,8 @@ export class CharacterCreatorScene extends Phaser.Scene {
       width: btnSmall.width, height: btnSmall.height, fontSize: L.fontSize('tiny'), strokeColor: 0x666666,
     });
 
-    createButton(this, L.x(0.92), L.y(0.78), 'SAVE', () => this.saveCharacter(), {
-      width: btnNormal.width, height: btnNormal.height, fillColor: 0x00aa44, strokeColor: 0x00ff66, fontSize: L.fontSize('body'),
+    createButton(this, L.x(0.88), L.y(0.78), 'SAVE', () => this.saveCharacter(), {
+      width: 140, height: 36, fillColor: 0x00aa44, strokeColor: 0x00ff66, fontSize: '16px',
     });
   }
 
