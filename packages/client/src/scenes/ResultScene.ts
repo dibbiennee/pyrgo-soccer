@@ -228,21 +228,24 @@ export class ResultScene extends Phaser.Scene {
 
       this.setupOnlineListeners();
     } else {
-      createButton(this, L.cx - L.unit(0.27), btnY, 'RIVINCITA', () => {
+      const smallBtn = L.button('small');
+      const btnSpacing = L.unit(0.27);
+
+      createButton(this, L.cx - btnSpacing, btnY, 'RIVINCITA', () => {
         transitionTo(this, 'VsScreen', {
           charRef1: this.charRef1,
           charRef2: this.charRef2,
           targetScene: 'CpuGame',
         });
-      }, { width: btnSize.width, height: btnSize.height, style: 'success' });
+      }, { width: smallBtn.width, height: smallBtn.height, style: 'success' });
 
       createButton(this, L.cx, btnY, 'CAMBIA PG', () => {
         transitionTo(this, 'CharSelect', { mode: this.gameMode });
-      }, { width: btnSize.width, height: btnSize.height, style: 'secondary' });
+      }, { width: smallBtn.width, height: smallBtn.height, style: 'secondary' });
 
-      createButton(this, L.cx + L.unit(0.27), btnY, 'MENU', () => {
+      createButton(this, L.cx + btnSpacing, btnY, 'MENU', () => {
         transitionTo(this, 'MainMenu');
-      }, { width: btnSize.width, height: btnSize.height, style: 'secondary' });
+      }, { width: smallBtn.width, height: smallBtn.height, style: 'secondary' });
     }
 
     // ── Sound ───────────────────────────────────────

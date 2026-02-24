@@ -37,7 +37,7 @@ import { TouchControls } from '../controls/TouchControls';
 import { SoundManager } from '../audio/SoundManager';
 import { MusicManager } from '../audio/MusicManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
-import { setupGameCamera } from '../utils/responsive';
+import { setupGameCamera, getBaseZoom } from '../utils/responsive';
 import { THEME } from '../ui/UITheme';
 
 export class LocalGameScene extends Phaser.Scene {
@@ -1289,8 +1289,8 @@ export class LocalGameScene extends Phaser.Scene {
         this.physics.world.timeScale = 0.3;
         this.tweens.timeScale = 0.3;
 
-        // Camera zoom 1.1x
-        this.cameras.main.zoomTo(1.1, 300);
+        // Camera zoom 1.1x (relative to base zoom)
+        this.cameras.main.zoomTo(getBaseZoom(this) * 1.1, 300);
 
         // Auto-jump at 2x velocity
         player.body.setVelocityY(-1100); // JUMP_VELOCITY * 2
@@ -1374,8 +1374,8 @@ export class LocalGameScene extends Phaser.Scene {
     this.physics.world.timeScale = 1;
     this.tweens.timeScale = 1;
 
-    // Camera back
-    this.cameras.main.zoomTo(1, 500);
+    // Camera back to base zoom
+    this.cameras.main.zoomTo(getBaseZoom(this), 500);
 
     // Unduck music
     MusicManager.getInstance().unduckAfterSuper();

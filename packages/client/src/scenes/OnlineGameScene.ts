@@ -33,7 +33,7 @@ import { MusicManager } from '../audio/MusicManager';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
-import { setupGameCamera } from '../utils/responsive';
+import { setupGameCamera, getBaseZoom } from '../utils/responsive';
 import { THEME } from '../ui/UITheme';
 
 interface ServerSnapshot {
@@ -564,8 +564,8 @@ export class OnlineGameScene extends Phaser.Scene {
         const container = data.playerIndex === 1 ? this.player1Container : this.player2Container;
         MusicManager.getInstance().playEffect('/sfx/super_ami.mp3');
 
-        // Camera zoom 1.1x
-        this.cameras.main.zoomTo(1.1, 300);
+        // Camera zoom 1.1x (relative to base zoom)
+        this.cameras.main.zoomTo(getBaseZoom(this) * 1.1, 300);
 
         // 360° rotation on container
         this.tweens.add({
@@ -595,7 +595,7 @@ export class OnlineGameScene extends Phaser.Scene {
         // End effects after 1800ms
         setTimeout(() => {
           clearInterval(particleInterval);
-          this.cameras.main.zoomTo(1, 500);
+          this.cameras.main.zoomTo(getBaseZoom(this), 500);
 
           // Fire impact particles
           for (let i = 0; i < 15; i++) {
