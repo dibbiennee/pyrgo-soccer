@@ -91,11 +91,24 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ─── Auto-start music on first user interaction ────
+import { MusicManager } from './audio/MusicManager';
+function startMusicOnce(): void {
+  const music = MusicManager.getInstance();
+  music.start();
+  document.removeEventListener('click', startMusicOnce);
+  document.removeEventListener('touchstart', startMusicOnce);
+  document.removeEventListener('keydown', startMusicOnce);
+}
+document.addEventListener('click', startMusicOnce);
+document.addEventListener('touchstart', startMusicOnce);
+document.addEventListener('keydown', startMusicOnce);
+
 // ─── Phaser game ───────────────────────────────────
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  backgroundColor: '#0f0f23',
+  backgroundColor: '#1a3d6e',
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

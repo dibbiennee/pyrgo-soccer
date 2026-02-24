@@ -2,14 +2,14 @@ import Phaser from 'phaser';
 
 // ─── Color Palette ─────────────────────────────────────
 export const THEME = {
-  // Backgrounds
-  bgTop: 0x0f0f23,
-  bgBottom: 0x1a1a3e,
-  bgTopHex: '#0f0f23',
+  // Backgrounds (stadium night — blue sky to green pitch)
+  bgTop: 0x1a3d6e,
+  bgBottom: 0x145a3c,
+  bgTopHex: '#1a3d6e',
 
-  // Primary (titles, active)
-  primary: 0x00d4ff,
-  primaryHex: '#00d4ff',
+  // Primary (gold — trophies, accents)
+  primary: 0xffd700,
+  primaryHex: '#ffd700',
 
   // Secondary (accents, CTA)
   secondary: 0xff6b35,
@@ -25,41 +25,41 @@ export const THEME = {
 
   // Text
   textPrimary: '#ffffff',
-  textSecondary: '#8892b0',
+  textSecondary: '#b0ccdd',
 
   // Buttons
-  buttonTop: 0x2a2a5a,
-  buttonBottom: 0x1e1e4a,
+  buttonTop: 0x2a5080,
+  buttonBottom: 0x1e3a60,
 
   // Card / Panel
-  cardBg: 0x1e1e4a,
-  cardBorder: 0x2a2a6a,
+  cardBg: 0x1a3555,
+  cardBorder: 0x2a6a8a,
 
   // HUD
-  hudBg: 0x0a0a2a,
+  hudBg: 0x0e2a40,
 
   // Stat bars
-  statBarEmpty: 0x222244,
-  statBarFillStart: 0x00d4ff,
-  statBarFillEnd: 0x0088cc,
+  statBarEmpty: 0x1a3050,
+  statBarFillStart: 0xffd700,
+  statBarFillEnd: 0xcc9900,
 
   // Particles
-  particleCyan: 0x00d4ff,
+  particleCyan: 0xffd700,
   particleOrange: 0xff6b35,
 
   // Touch controls
-  touchDpad: 0x3a3a6a,
+  touchDpad: 0x2a5070,
   touchJump: 0x2255aa,
   touchKick: 0xaa2222,
   touchSuper: 0xaa6600,
-  touchDpadPressed: 0x6666bb,
+  touchDpadPressed: 0x4a80bb,
   touchJumpPressed: 0x4488dd,
   touchKickPressed: 0xdd4444,
   touchSuperPressed: 0xddaa00,
 
   // Shadow
-  shadowColor: 0x050510,
-  shadowAlpha: 0.4,
+  shadowColor: 0x050a15,
+  shadowAlpha: 0.35,
 };
 
 // ─── Style presets for buttons ─────────────────────────
@@ -73,8 +73,8 @@ export interface ButtonStyleDef {
 
 export const BUTTON_STYLES: Record<string, ButtonStyleDef> = {
   primary: {
-    fillTop: 0x0a4466,
-    fillBottom: 0x062a44,
+    fillTop: 0x1a5a3a,
+    fillBottom: 0x0e3a24,
     stroke: THEME.primary,
     glowColor: THEME.primary,
     textColor: '#ffffff',
@@ -87,8 +87,8 @@ export const BUTTON_STYLES: Record<string, ButtonStyleDef> = {
     textColor: '#ffffff',
   },
   success: {
-    fillTop: 0x0a5a2e,
-    fillBottom: 0x063a1e,
+    fillTop: 0x1a6a3e,
+    fillBottom: 0x0e4a28,
     stroke: THEME.success,
     glowColor: THEME.success,
     textColor: '#ffffff',
@@ -101,11 +101,11 @@ export const BUTTON_STYLES: Record<string, ButtonStyleDef> = {
     textColor: '#ffffff',
   },
   ghost: {
-    fillTop: 0x1a1a3a,
-    fillBottom: 0x14142e,
-    stroke: 0x444466,
+    fillTop: 0x1a3050,
+    fillBottom: 0x142540,
+    stroke: 0x3a6080,
     glowColor: 0x000000,
-    textColor: '#8892b0',
+    textColor: '#b0ccdd',
   },
 };
 

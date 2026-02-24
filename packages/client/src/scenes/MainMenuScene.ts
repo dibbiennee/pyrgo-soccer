@@ -26,9 +26,9 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Stylised field gradient (bottom half)
     const fieldGfx = this.add.graphics();
-    fieldGfx.fillStyle(0x0a2a15, 1);
+    fieldGfx.fillStyle(0x0e5a2e, 0.6);
     fieldGfx.fillRect(0, L.y(0.6), L.w, L.h * 0.4);
-    fieldGfx.fillStyle(0x0c3318, 0.5);
+    fieldGfx.fillStyle(0x1a8a44, 0.3);
     fieldGfx.fillRect(0, L.y(0.6), L.w, 2);
 
     // Field markings (subtle)
@@ -65,7 +65,7 @@ export class MainMenuScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5).setScale(0);
-    title.setShadow(0, 0, '#00d4ff80', 20);
+    title.setShadow(0, 0, '#ffd70080', 20);
 
     this.tweens.add({
       targets: title,

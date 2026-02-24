@@ -12,8 +12,8 @@ const SONG_NAMES = [
   'TUCA TUCADA',
 ];
 
-const BASE_VOLUME = 0.4;
-const GAMEPLAY_VOLUME_RATIO = 0.3; // effective: 0.12 during gameplay
+const BASE_VOLUME = 0.15;
+const GAMEPLAY_VOLUME_RATIO = 0.5; // effective: 0.075 during gameplay
 
 export class MusicManager {
   private static instance: MusicManager;
@@ -66,11 +66,26 @@ export class MusicManager {
     }
   }
 
+  /** Pause background music (e.g. for victory jingle). */
+  pause(): void {
+    if (this.audio && !this.audio.paused) {
+      this.audio.pause();
+    }
+  }
+
+  /** Resume background music after a pause. */
+  resume(): void {
+    if (this.audio && this.audio.paused && this.enabled && this.started) {
+      this.updateVolume();
+      this.audio.play().catch(() => {});
+    }
+  }
+
   /** Play a one-shot MP3 sound effect (e.g. super move SFX). */
-  playEffect(url: string): void {
+  playEffect(url: string, volume?: number): void {
     if (!this.enabled) return;
     const sfx = new Audio(url);
-    sfx.volume = BASE_VOLUME;
+    sfx.volume = volume ?? BASE_VOLUME;
     sfx.play().catch(() => {});
   }
 

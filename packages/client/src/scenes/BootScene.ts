@@ -22,7 +22,7 @@ export class BootScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5);
-    logo.setShadow(0, 0, '#00d4ff80', 20);
+    logo.setShadow(0, 0, '#ffd70080', 20);
 
     // Pulsing logo glow
     this.tweens.add({

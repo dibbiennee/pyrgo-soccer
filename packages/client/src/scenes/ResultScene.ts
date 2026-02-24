@@ -3,6 +3,7 @@ import { resolveCharacter, defaultAppearanceForPreset } from '@pyrgo/shared';
 import type { ScoreState, CharacterRef, Appearance } from '@pyrgo/shared';
 import { CharacterRenderer } from '../rendering/CharacterRenderer';
 import { SoundManager } from '../audio/SoundManager';
+import { MusicManager } from '../audio/MusicManager';
 import { SocketManager } from '../network/SocketManager';
 import { transitionTo, fadeIn } from '../utils/SceneTransition';
 import { createButton, type ButtonGroup } from '../ui/ButtonFactory';
@@ -245,8 +246,10 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // ── Sound ───────────────────────────────────────
+    const music = MusicManager.getInstance();
     if (this.winner) {
-      sm.victoryJingle();
+      music.pause();
+      music.playEffect('/sfx/victory.mp3', 0.5);
     } else {
       sm.defeatSound();
     }
@@ -313,5 +316,6 @@ export class ResultScene extends Phaser.Scene {
   shutdown(): void {
     this.cleanupOnlineListeners();
     this.tweens.killAll();
+    MusicManager.getInstance().resume();
   }
 }
