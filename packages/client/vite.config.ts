@@ -25,8 +25,8 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         orientation: 'any',
-        theme_color: '#1a1a2e',
-        background_color: '#1a1a2e',
+        theme_color: '#000008',
+        background_color: '#000008',
         categories: ['games', 'sports'],
         icons: iconSizes.map(size => ({
           src: `/icons/icon-${size}.png`,
