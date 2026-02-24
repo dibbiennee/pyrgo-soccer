@@ -309,7 +309,7 @@ export class OnlineGameScene extends Phaser.Scene {
   // HUD
   // ═══════════════════════════════════════════════════
   private createHUD(): void {
-    const hudTop = 4;
+    const hudTop = 35;
     const meterY = hudTop + 34;
 
     this.scoreText = this.add.text(GAME_WIDTH / 2, hudTop, '0 - 0', {

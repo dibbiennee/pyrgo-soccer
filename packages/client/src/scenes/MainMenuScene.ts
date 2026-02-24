@@ -140,7 +140,7 @@ export class MainMenuScene extends Phaser.Scene {
     }, { width: btnSize.width, height: btnSize.height });
 
     // ── Gear icon (Settings) — top right ────────────
-    const gearText = this.add.text(L.x(0.96), L.y(0.04), '\u2699', {
+    const gearText = this.add.text(L.x(0.96), L.y(0.05), '\u2699', {
       fontSize: L.fontSize('heading'), fontFamily: 'Arial', color: '#666688',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 

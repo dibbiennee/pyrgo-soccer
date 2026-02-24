@@ -516,7 +516,7 @@ export class LocalGameScene extends Phaser.Scene {
   }
 
   private createHUD(): void {
-    const hudTop = 4;
+    const hudTop = 35;
     const meterY = hudTop + 34;
 
     // Score
