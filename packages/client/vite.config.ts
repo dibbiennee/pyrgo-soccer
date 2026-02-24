@@ -37,21 +37,20 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,svg,woff2,png}'],
-        navigateFallback: 'index.html',
+        navigateFallback: null,
+        // Do NOT precache index.html — always fetch fresh from server
+        globPatterns: ['**/*.{js,css,svg,woff2,png}'],
+        globIgnores: ['**/index.html'],
         runtimeCaching: [
           {
-            urlPattern: /\/characters$/,
+            urlPattern: /\.(?:js|css|woff2?)$/,
             handler: 'StaleWhileRevalidate',
-            method: 'GET',
-            options: {
-              cacheName: 'characters-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 3600 },
-            },
+            options: { cacheName: 'static-assets' },
           },
           {
-            urlPattern: /\/socket\.io/,
-            handler: 'NetworkOnly',
+            urlPattern: /\/characters/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'api-cache' },
           },
         ],
       },

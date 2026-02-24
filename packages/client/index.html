@@ -93,6 +93,16 @@
     <button class="install-btn" id="install-btn">Install</button>
     <button class="dismiss-btn" id="dismiss-btn">Not now</button>
   </div>
+  <script>
+    // Force SW update check on every page load (iOS PWA cache fix)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(reg => {
+          reg.update();
+        });
+      });
+    }
+  </script>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
