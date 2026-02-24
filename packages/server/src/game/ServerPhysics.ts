@@ -65,6 +65,8 @@ export interface PhysicsState {
   ball: BallState;
   goalScored: number | null; // player who scored, or null
   events: PhysicsEvent[];
+  /** Thunder kick gravity-ignore timer (ms remaining). When 0, ball.gravityIgnored is reset. */
+  thunderGravityTimer: number;
 }
 
 export class ServerPhysics {
@@ -106,6 +108,15 @@ export class ServerPhysics {
     // Reset events each tick
     state.events = [];
 
+    // Thunder kick gravity-ignore timer (500ms like local)
+    if (state.thunderGravityTimer > 0) {
+      state.thunderGravityTimer -= dt;
+      if (state.thunderGravityTimer <= 0) {
+        state.thunderGravityTimer = 0;
+        state.ball.gravityIgnored = false;
+      }
+    }
+
     // Process each player
     for (let i = 0; i < 2; i++) {
       const player = state.players[i];
@@ -144,24 +155,17 @@ export class ServerPhysics {
     // Fix #1: Flame Dash speed 2x → 1.5x (aligns with Player.ts)
     const speed = player.flameDashActive ? player.moveSpeed * 1.5 : player.moveSpeed;
 
-    // Ice field effect
-    const opponent = state.players[s.id === 1 ? 1 : 0];
-    const iced = opponent.iceFieldActive;
-
     // Horizontal movement
+    // Note: Ice field effect in local (Phaser dragX=10) is overridden by direct
+    // setVelocityX() each frame, so ice has negligible effect. Match that here.
     if (input.left) {
-      s.vx = iced ? Math.max(s.vx - speed * 0.1, -speed) : -speed;
+      s.vx = -speed;
       s.facingRight = false;
     } else if (input.right) {
-      s.vx = iced ? Math.min(s.vx + speed * 0.1, speed) : speed;
+      s.vx = speed;
       s.facingRight = true;
     } else {
-      if (iced) {
-        // Fix #8: Ice slide 0.98 → 0.99 (closer to Phaser dragX=10 at 60fps)
-        s.vx *= 0.99;
-      } else {
-        s.vx = 0;
-      }
+      s.vx = 0;
     }
 
     // Jump
@@ -315,6 +319,7 @@ export class ServerPhysics {
       if (player.thunderKickReady) {
         force *= 3;
         ball.gravityIgnored = true;
+        state.thunderGravityTimer = 500; // 500ms like local
         player.thunderKickReady = false;
         s.superActive = false;
       }
@@ -573,13 +578,14 @@ export class ServerPhysics {
     return null;
   }
 
-  static resetBall(ball: BallState): void {
+  static resetBall(ball: BallState, state?: PhysicsState): void {
     ball.x = GAME_WIDTH / 2;
     ball.y = GAME_HEIGHT / 3;
     ball.vx = 0;
     ball.vy = 0;
     ball.poisoned = false;
     ball.gravityIgnored = false;
+    if (state) state.thunderGravityTimer = 0;
   }
 
   static resetPlayer(player: PhysicsPlayer, spawnX: number): void {

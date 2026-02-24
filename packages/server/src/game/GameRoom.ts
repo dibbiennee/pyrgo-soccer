@@ -135,6 +135,7 @@ export class GameRoom {
       },
       goalScored: null,
       events: [],
+      thunderGravityTimer: 0,
     };
 
     this.score = { player1: 0, player2: 0 };
@@ -331,7 +332,7 @@ export class GameRoom {
   private resetPositions(): void {
     ServerPhysics.resetPlayer(this.physicsState.players[0], PLAYER1_SPAWN_X);
     ServerPhysics.resetPlayer(this.physicsState.players[1], PLAYER2_SPAWN_X);
-    ServerPhysics.resetBall(this.physicsState.ball);
+    ServerPhysics.resetBall(this.physicsState.ball, this.physicsState);
   }
 
   // ═══════════════════════════════════════════════════
