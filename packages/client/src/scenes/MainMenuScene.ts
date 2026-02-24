@@ -114,15 +114,11 @@ export class MainMenuScene extends Phaser.Scene {
     const btnSize = L.button('large');
 
     // Left column (play modes)
-    createButton(this, leftX, L.y(0.42), 'VS CPU', () => {
+    createButton(this, leftX, L.y(0.46), 'VS CPU', () => {
       transitionTo(this, 'CharSelect', { mode: 'cpu' });
     }, { width: btnSize.width, height: btnSize.height });
 
-    createButton(this, leftX, L.y(0.50), 'LOCAL MATCH', () => {
-      transitionTo(this, 'CharSelect', { mode: 'local' });
-    }, { width: btnSize.width, height: btnSize.height });
-
-    createButton(this, leftX, L.y(0.58), 'ONLINE MATCH', () => {
+    createButton(this, leftX, L.y(0.54), 'ONLINE MATCH', () => {
       transitionTo(this, 'CharSelect', { mode: 'online' });
     }, { width: btnSize.width, height: btnSize.height });
 

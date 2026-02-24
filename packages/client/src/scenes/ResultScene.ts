@@ -20,7 +20,7 @@ export class ResultScene extends Phaser.Scene {
   private score: ScoreState = { player1: 0, player2: 0 };
   private charRef1: CharacterRef = { type: 'preset', id: 1 };
   private charRef2: CharacterRef = { type: 'preset', id: 2 };
-  private gameMode: 'local' | 'cpu' | 'online' = 'local';
+  private gameMode: 'cpu' | 'online' = 'cpu';
   private stats: MatchStats = { shotsP1: 0, shotsP2: 0, supersUsedP1: 0, supersUsedP2: 0 };
   private roomCode = '';
   private myIndex = 1;
@@ -52,7 +52,7 @@ export class ResultScene extends Phaser.Scene {
     this.score = data.score;
     this.charRef1 = data.charRef1 ?? { type: 'preset', id: data.char1 ?? 1 };
     this.charRef2 = data.charRef2 ?? { type: 'preset', id: data.char2 ?? 2 };
-    this.gameMode = (data.mode as 'local' | 'cpu' | 'online') ?? 'local';
+    this.gameMode = (data.mode as 'cpu' | 'online') ?? 'cpu';
     this.stats = data.stats ?? { shotsP1: 0, shotsP2: 0, supersUsedP1: 0, supersUsedP2: 0 };
     this.roomCode = data.roomCode ?? '';
     this.myIndex = data.myIndex ?? 1;
@@ -230,7 +230,7 @@ export class ResultScene extends Phaser.Scene {
         transitionTo(this, 'VsScreen', {
           charRef1: this.charRef1,
           charRef2: this.charRef2,
-          targetScene: this.gameMode === 'cpu' ? 'CpuGame' : 'LocalGame',
+          targetScene: 'CpuGame',
         });
       }, { width: btnSize.width, height: btnSize.height, fillColor: 0x00aa44, strokeColor: 0x00ff66 });
 

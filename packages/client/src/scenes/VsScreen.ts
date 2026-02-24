@@ -12,7 +12,7 @@ import { LayoutManager } from '../utils/LayoutManager';
 export class VsScreen extends Phaser.Scene {
   private charRef1: CharacterRef = { type: 'preset', id: 1 };
   private charRef2: CharacterRef = { type: 'preset', id: 2 };
-  private targetScene = 'LocalGame';
+  private targetScene = 'CpuGame';
   private extraData: Record<string, unknown> = {};
 
   constructor() {
@@ -27,7 +27,7 @@ export class VsScreen extends Phaser.Scene {
   }): void {
     this.charRef1 = data.charRef1 ?? { type: 'preset', id: 1 };
     this.charRef2 = data.charRef2 ?? { type: 'preset', id: 2 };
-    this.targetScene = data.targetScene ?? 'LocalGame';
+    this.targetScene = data.targetScene ?? 'CpuGame';
     const { charRef1: _a, charRef2: _b, targetScene: _c, ...rest } = data;
     this.extraData = rest;
   }

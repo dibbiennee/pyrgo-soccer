@@ -1,5 +1,6 @@
 import type { InputState, CharacterRef } from '@pyrgo/shared';
 import { LocalGameScene } from './LocalGameScene';
+import { TouchControls } from '../controls/TouchControls';
 import { CpuController } from '../objects/CpuController';
 import type { CpuDifficulty } from '../objects/CpuController';
 
@@ -19,6 +20,11 @@ export class CpuGameScene extends LocalGameScene {
   create(): void {
     super.create();
     this.cpuController = new CpuController(this.cpuDifficulty);
+  }
+
+  // Override: single-player touch controls only (CPU doesn't need P2 controls)
+  protected createTouchControls(): void {
+    this.touchControls = new TouchControls({ scene: this, mode: 'single' });
   }
 
   protected getP2Input(): InputState {

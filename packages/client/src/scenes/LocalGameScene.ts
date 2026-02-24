@@ -104,7 +104,7 @@ export class LocalGameScene extends Phaser.Scene {
   private charRef2: CharacterRef = { type: 'preset', id: 2 };
 
   // Touch controls
-  private touchControls?: TouchControls;
+  protected touchControls?: TouchControls;
 
   // Sound
   private sound_mgr = SoundManager.getInstance();
@@ -572,7 +572,7 @@ export class LocalGameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(100);
   }
 
-  private createTouchControls(): void {
+  protected createTouchControls(): void {
     this.touchControls = new TouchControls({ scene: this, mode: 'dual' });
   }
 
@@ -906,7 +906,7 @@ export class LocalGameScene extends Phaser.Scene {
         score: { ...this.score },
         charRef1: this.charRef1,
         charRef2: this.charRef2,
-        mode: this.scene.key === 'CpuGame' ? 'cpu' : 'local',
+        mode: 'cpu',
         stats: {
           shotsP1: this.shotsP1,
           shotsP2: this.shotsP2,

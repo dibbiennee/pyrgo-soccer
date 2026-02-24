@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
 import { CharSelectScene } from './scenes/CharSelectScene';
-import { LocalGameScene } from './scenes/LocalGameScene';
+
 import { OnlineGameScene } from './scenes/OnlineGameScene';
 import { OnlineHubScene } from './scenes/OnlineHubScene';
 import { OnlineLobbyScene } from './scenes/OnlineLobbyScene';
@@ -113,7 +113,6 @@ const config: Phaser.Types.Core.GameConfig = {
     BootScene,
     MainMenuScene,
     CharSelectScene,
-    LocalGameScene,
     CpuGameScene,
     OnlineGameScene,
     OnlineHubScene,

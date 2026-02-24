@@ -17,7 +17,7 @@ type SelectTab = 'mine' | 'preset' | 'community';
 export class CharSelectScene extends Phaser.Scene {
   private L!: LayoutManager;
 
-  private mode: 'local' | 'online' | 'cpu' = 'local';
+  private mode: 'online' | 'cpu' = 'cpu';
   private activePlayer = 1;
   private activeTab: SelectTab = 'preset';
   private communityChars: PublishedCharacter[] = [];
@@ -37,8 +37,8 @@ export class CharSelectScene extends Phaser.Scene {
     super('CharSelect');
   }
 
-  init(data: { mode?: 'local' | 'online' | 'cpu' }): void {
-    this.mode = data.mode ?? 'local';
+  init(data: { mode?: 'online' | 'cpu' }): void {
+    this.mode = data.mode ?? 'cpu';
     this.activePlayer = 1;
     this.selection1 = { type: 'preset', id: 1 };
     this.selection2 = { type: 'preset', id: 2 };
@@ -343,21 +343,7 @@ export class CharSelectScene extends Phaser.Scene {
   // CONFIRM
   // ════════════════════════════════════════════════════
   private confirmSelection(): void {
-    if (this.mode === 'local') {
-      if (this.activePlayer === 1) {
-        this.activePlayer = 2;
-        this.selectionIndicator.setText('Player 2 \u2014 Choose!');
-        this.selectionIndicator.setColor('#ff4444');
-        this.showGrid();
-        this.updatePreview();
-      } else {
-        transitionTo(this, 'VsScreen', {
-          charRef1: this.selection1,
-          charRef2: this.selection2,
-          targetScene: 'LocalGame',
-        });
-      }
-    } else if (this.mode === 'cpu') {
+    if (this.mode === 'cpu') {
       const cpuIndex = Math.floor(Math.random() * CHARACTERS.length);
       transitionTo(this, 'VsScreen', {
         charRef1: this.selection1,
